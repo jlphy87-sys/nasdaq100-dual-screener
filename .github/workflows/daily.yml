@@ -1,0 +1,52 @@
+# daily.yml — 매 거래일 스크리너 자동 실행 → results.json 커밋 → Pages 재배포 (명세 §9, D0/D9)
+name: daily-screen
+
+on:
+  schedule:
+    # 23:00 UTC = 미 동부 18:00(EDT, 서머타임) / 19:00(EST) — 장마감(16:00 ET) 후 여유.
+    # DST 주석: cron 은 UTC 고정이라 겨울(EST)에는 실행이 1시간 늦은 체감이 되지만
+    # 어차피 장마감 후라 결과는 동일하다. 당길 필요가 생기면 "0 22 * * 1-5" 로.
+    - cron: "0 23 * * 1-5"
+  workflow_dispatch: {}   # Actions 탭에서 수동 실행 버튼 (완료 정의 §14 1회 검증용)
+
+permissions:
+  contents: write         # 봇 커밋·푸시용
+
+concurrency:
+  group: daily-screen
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: 의존성 설치
+        run: pip install -r backend/requirements.txt
+
+      - name: 테스트 (지표·판정 회귀 방지 — 실패 시 배포 중단)
+        run: |
+          pip install pytest
+          python -m pytest backend -q   # 프런트 테스트는 py_mini_racer 없으면 자동 skip
+
+      - name: 스크리너 실행
+        run: python backend/run.py
+
+      - name: results.json 변경 시 봇 커밋·푸시
+        run: |
+          git config user.name "screener-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/data/results.json backend/data/constituents.json
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+          else
+            git commit -m "chore: daily screen $(date -u +%F)"
+            git push
+          fi

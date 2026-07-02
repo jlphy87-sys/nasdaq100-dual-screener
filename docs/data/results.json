@@ -1,6 +1,6 @@
 {
  "as_of": "2026-07-01",
- "generated_at": "2026-07-02T07:09:36Z",
+ "generated_at": "2026-07-02T07:18:20Z",
  "stale": false,
  "universe_count": 101,
  "regime": {
@@ -10,7 +10,7 @@
   "qqq_sma200": 632.87
  },
  "counts": {
-  "s1": 3,
+  "s1": 5,
   "s2": 0,
   "both": 0
  },
@@ -22,6 +22,12 @@
  "errors": [],
  "warnings": [],
  "sectors": [
+  {
+   "key": "IT/기술",
+   "color": "#3B82F6",
+   "count_s1": 2,
+   "count_s2": 0
+  },
   {
    "key": "산업재",
    "color": "#64748B",
@@ -35,8 +41,8 @@
    "count_s2": 0
   },
   {
-   "key": "IT/기술",
-   "color": "#3B82F6",
+   "key": "소재",
+   "color": "#F97316",
    "count_s1": 1,
    "count_s2": 0
   }
@@ -180,6 +186,100 @@
      "cond_pullback": false,
      "cond_trigger": false,
      "cond_rs_top": true
+    }
+   }
+  },
+  {
+   "ticker": "LIN",
+   "name": "Linde plc",
+   "sector": "Materials",
+   "sector_kr": "소재",
+   "price": 533.55,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-01",
+    "slow_k": 56.85,
+    "slow_d": 56.08,
+    "macd": 4.4729,
+    "signal": 3.6452,
+    "hist": 0.8277,
+    "avg_dollar_volume": 1364751114.0,
+    "sma200": 466.55,
+    "vol_ratio": 1.17,
+    "adx": 13.7,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.8584,
+    "rs_6m": 1.0754,
+    "sma50": 507.86,
+    "sma200": 466.55,
+    "drawdown": 0.0,
+    "pullback_low_pct": -0.0407,
+    "trigger": "breakout",
+    "vol_ratio": 1.17,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": true,
+     "cond_drawdown": true,
+     "cond_pullback": true,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "META",
+   "name": "Meta Platforms",
+   "sector": "Information Technology",
+   "sector_kr": "IT/기술",
+   "price": 612.91,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-01",
+    "slow_k": 50.64,
+    "slow_d": 32.13,
+    "macd": -9.7691,
+    "signal": -12.9241,
+    "hist": 3.155,
+    "avg_dollar_volume": 11515170715.0,
+    "sma200": 646.3,
+    "vol_ratio": 2.3,
+    "adx": 18.6,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.8525,
+    "rs_6m": 0.7962,
+    "sma50": 606.51,
+    "sma200": 646.3,
+    "drawdown": -0.2216,
+    "pullback_low_pct": -0.0903,
+    "trigger": "breakout",
+    "vol_ratio": 2.3,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": false,
+     "cond_pullback": false,
+     "cond_trigger": true,
+     "cond_rs_top": false
     }
    }
   }
