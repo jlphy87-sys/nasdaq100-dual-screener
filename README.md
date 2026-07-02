@@ -42,7 +42,7 @@ QQQ가 200일선 아래면 그날은 **후보 0이 정상 동작**이고, 앱 S2
 "시장 체제 필터: 오늘 진입 없음" 안내가 뜹니다 (에러 아님 — 스크린이 일한 결과).
 
 항상 0이 계속되어 완화하고 싶다면 `config.json`에서 이 순서로:
-1. `s2.rs.top_pct`: 25 → 40 (상대강도 상위 % 완화)
+1. `s2.rs.top_pct`: 10 → 25 (설계 원값) → 40 (상대강도 상위 % 완화)
 2. `s2.pullback`: min 0.03 / max 0.08 → 범위 확대 (예: 0.02~0.10)
 
 ---
@@ -125,7 +125,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | `s1.volume.min_avg_dollar_volume` | $50M | 20일 평균 거래대금 하한 |
 | `s1.trend/volume_surge/adx.enabled` | false | 선택 필터 3종 (켜면 AND 참여) |
 | `s2.regime.enabled` | true | QQQ>SMA200 체제 스위치 (D13) |
-| `s2.rs.top_pct` | 25 | 상대강도 상위 % (D14) |
+| `s2.rs.top_pct` | 10 | 상대강도 상위 % (D14 — 백테스트 D18 결과로 25→10 조정, 인샘플 주의) |
 | `s2.max_drawdown` | -0.15 | 52주 고점 대비 허용 하락 |
 | `s2.pullback.min/max` | 3%/8% | 눌림 인정 범위 (D15) |
 | `s2.trigger.mode` | breakout | `macd_gc`로 바꾸면 트리거 실험 가능 |
@@ -145,7 +145,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | D9 | GitHub Pages(docs/) + Actions. 비밀키 없음, 무료 |
 | D10~D12 | S1 선택 필터: SMA200 추세 / 교차봉 거래량 급증 / ADX (기본 off) |
 | D13 | S2 1층 체제 필터: QQQ>SMA200. **약점**: 톱니장에서 신호 지연·반전 가능 |
-| D14 | S2 2층 상대강도: rs_3m·rs_6m>1 + 유니버스 상위 25% |
+| D14 | S2 2층 상대강도: rs_3m·rs_6m>1 + 유니버스 상위 10% (설계 25 → 백테스트 D18 채택으로 10, 탈출구: top_pct 노브) |
 | D15 | S2 3·4층: 정배열 + 고점-15% 이내 + 3~8% 눌림 후 돌파 트리거 |
 | D16 | (예약) 어닝 캘린더 필터 — yfinance 캘린더 안정화 전까지 보류 |
 | D17 | APK = 의존성 0개 WebView 래퍼(`android/`), Actions에서 빌드→Release 발행. 서명 키는 즉석 생성(기본)·시크릿 고정(탈출구). 스토어 배포 시 TWA 교체 탈출구 |

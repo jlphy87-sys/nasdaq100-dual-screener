@@ -12,7 +12,7 @@
   },
   "s2": {
     "regime": { "enabled": true, "benchmark": "QQQ", "sma_period": 200 },
-    "rs": { "short_bars": 63, "long_bars": 126, "dual_period": true, "top_pct": 25 },
+    "rs": { "short_bars": 63, "long_bars": 126, "dual_period": true, "top_pct": 10 },
     "structure": { "sma_fast": 50, "sma_slow": 200 },
     "max_drawdown": -0.15,
     "pullback": { "lookback": 10, "min": 0.03, "max": 0.08 },

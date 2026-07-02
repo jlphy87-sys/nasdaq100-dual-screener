@@ -1,6 +1,6 @@
 {
  "as_of": "2026-07-01",
- "generated_at": "2026-07-02T07:44:23Z",
+ "generated_at": "2026-07-02T12:40:36Z",
  "stale": false,
  "universe_count": 101,
  "regime": {
@@ -16,7 +16,7 @@
  },
  "config_summary": {
   "s1": "MACD(12/26/9) GC + SlowK>=50 + $vol>=50,000,000",
-  "s2": "regime(QQQ>SMA200) + RS 상위25% + 정배열 + 눌림3~8% 회복"
+  "s2": "regime(QQQ>SMA200) + RS 상위10% + 정배열 + 눌림3~8% 회복"
  },
  "errors_count": 0,
  "errors": [],
@@ -185,7 +185,7 @@
      "cond_drawdown": false,
      "cond_pullback": false,
      "cond_trigger": false,
-     "cond_rs_top": true
+     "cond_rs_top": false
     }
    }
   },
