@@ -3,7 +3,7 @@
  * results.json: stale-while-revalidate (캐시본 먼저 주고, 백그라운드 갱신).
  * 버전 올리면 옛 캐시 정리.
  */
-var VERSION = "v1";
+var VERSION = "v2"; /* UI 개선(2026-07-02) — 셸 캐시 무효화 */
 var SHELL_CACHE = "shell-" + VERSION;
 var DATA_CACHE = "data-" + VERSION;
 

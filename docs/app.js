@@ -160,7 +160,8 @@
     var r = state.data.regime;
     // S2/겹침 탭 + 체제 미통과/판정불가 → 리스트 대신 안내 (배너와 중복이지만 본문에도)
     if ((state.tab === "s2" || state.tab === "both") && r.enabled && r.ok !== true) {
-      el.innerHTML = '<div class="empty"><div class="big">' +
+      el.innerHTML = '<div class="empty"><div class="icon">' +
+        (r.ok === false ? "🛡️" : "📡") + '</div><div class="big">' +
         (r.ok === false ? "시장 체제 필터: 오늘 진입 없음" : "스크리닝2 판정불가 (QQQ 데이터 없음)") +
         '</div><div class="small">' +
         (r.ok === false
@@ -172,7 +173,7 @@
     var items = AppLogic.filterSort(tabItems(),
       Array.from(state.activeSectors), state.sort[state.tab]);
     if (items.length === 0) {
-      el.innerHTML = '<div class="empty"><div class="big">' +
+      el.innerHTML = '<div class="empty"><div class="icon">🔍</div><div class="big">' +
         (tabItems().length === 0
           ? "오늘 조건을 만족하는 종목이 없습니다."
           : "선택한 섹터에 해당 종목이 없습니다.") +
@@ -213,7 +214,6 @@
     var showS2 = (state.tab === "s2" || state.tab === "both") && it.s2;
     if (showS1) {
       row2 += '<div class="card-row2">' +
-        kv("종가", it.price == null ? "—" : it.price.toLocaleString()) +
         kv("골든크로스", esc(it.s1.gc_date || "—")) +
         kv("SlowK", fmtNum(it.s1.slow_k, 1)) +
         kv("거래대금", fmtMoney(it.s1.avg_dollar_volume)) +
@@ -221,7 +221,6 @@
     }
     if (showS2) {
       row2 += '<div class="card-row2">' +
-        (showS1 ? "" : kv("종가", it.price == null ? "—" : it.price.toLocaleString())) +
         kv("RS(3m)", fmtNum(it.s2.rs_3m, 2) + "×") +
         kv("고점대비", fmtPct(it.s2.drawdown)) +
         kv("트리거", esc(it.s2.trigger || "—")) +
@@ -251,7 +250,9 @@
     return '<article class="card" style="border-left-color:' + esc(color) + '">' +
       '<div class="card-row1"><span class="tk">' + esc(it.ticker) + "</span>" +
       '<span class="dot" style="background:' + esc(color) + '"></span>' +
-      '<span class="nm">' + esc(it.name) + '</span><span class="badges">' + badge + "</span></div>" +
+      '<span class="nm">' + esc(it.name) + "</span>" +
+      '<span class="price">' + (it.price == null ? "—" : "$" + it.price.toLocaleString()) + "</span>" +
+      '<span class="badges">' + badge + '</span><span class="chev">▼</span></div>' +
       row2 + detail + "</article>";
   }
   function kv(k, v) { return '<span class="kv"><span class="k">' + k + '</span><br><span class="v">' + v + "</span></span>"; }
