@@ -1,0 +1,507 @@
+{
+  "ADBE": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Adobe Inc."
+  },
+  "AMD": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Advanced Micro Devices"
+  },
+  "ABNB": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Airbnb"
+  },
+  "ALNY": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Alnylam Pharmaceuticals"
+  },
+  "GOOGL": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Alphabet Inc. (Class A)"
+  },
+  "GOOG": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Alphabet Inc. (Class C)"
+  },
+  "AMZN": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Amazon"
+  },
+  "AEP": {
+    "sector": "Utilities",
+    "sector_kr": "유틸리티",
+    "name": "American Electric Power"
+  },
+  "AMGN": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Amgen"
+  },
+  "ADI": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Analog Devices"
+  },
+  "AAPL": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Apple Inc."
+  },
+  "AMAT": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Applied Materials"
+  },
+  "APP": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "AppLovin"
+  },
+  "ARM": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Arm Holdings"
+  },
+  "ASML": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "ASML Holding"
+  },
+  "ALAB": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Astera Labs"
+  },
+  "ADSK": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Autodesk"
+  },
+  "ADP": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Automatic Data Processing"
+  },
+  "AXON": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Axon Enterprise"
+  },
+  "BKR": {
+    "sector": "Energy",
+    "sector_kr": "에너지",
+    "name": "Baker Hughes"
+  },
+  "BKNG": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Booking Holdings"
+  },
+  "AVGO": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Broadcom"
+  },
+  "CDNS": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Cadence Design Systems"
+  },
+  "CTAS": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Cintas"
+  },
+  "CSCO": {
+    "sector": "Communication Services",
+    "sector_kr": "커뮤니케이션",
+    "name": "Cisco"
+  },
+  "CCEP": {
+    "sector": "Consumer Staples",
+    "sector_kr": "필수소비재",
+    "name": "Coca-Cola Europacific Partners"
+  },
+  "CMCSA": {
+    "sector": "Communication Services",
+    "sector_kr": "커뮤니케이션",
+    "name": "Comcast"
+  },
+  "CEG": {
+    "sector": "Utilities",
+    "sector_kr": "유틸리티",
+    "name": "Constellation Energy"
+  },
+  "CPRT": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Copart"
+  },
+  "CRWV": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "CoreWeave"
+  },
+  "COST": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Costco"
+  },
+  "CRWD": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "CrowdStrike"
+  },
+  "CSX": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "CSX Corporation"
+  },
+  "DDOG": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Datadog"
+  },
+  "DXCM": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "DexCom"
+  },
+  "FANG": {
+    "sector": "Energy",
+    "sector_kr": "에너지",
+    "name": "Diamondback Energy"
+  },
+  "DASH": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "DoorDash"
+  },
+  "EA": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Electronic Arts"
+  },
+  "EXC": {
+    "sector": "Utilities",
+    "sector_kr": "유틸리티",
+    "name": "Exelon"
+  },
+  "FAST": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Fastenal"
+  },
+  "FER": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Ferrovial"
+  },
+  "FTNT": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Fortinet"
+  },
+  "GEHC": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "GE HealthCare"
+  },
+  "GILD": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Gilead Sciences"
+  },
+  "HON": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Honeywell Technologies"
+  },
+  "IDXX": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Idexx Laboratories"
+  },
+  "INTC": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Intel"
+  },
+  "INTU": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Intuit"
+  },
+  "ISRG": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Intuitive Surgical"
+  },
+  "KDP": {
+    "sector": "Consumer Staples",
+    "sector_kr": "필수소비재",
+    "name": "Keurig Dr Pepper"
+  },
+  "KLAC": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "KLA Corporation"
+  },
+  "KHC": {
+    "sector": "Consumer Staples",
+    "sector_kr": "필수소비재",
+    "name": "Kraft Heinz"
+  },
+  "LRCX": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Lam Research"
+  },
+  "LIN": {
+    "sector": "Materials",
+    "sector_kr": "소재",
+    "name": "Linde plc"
+  },
+  "LITE": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Lumentum"
+  },
+  "MAR": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Marriott International"
+  },
+  "MRVL": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Marvell Technology"
+  },
+  "MELI": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Mercado Libre"
+  },
+  "META": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Meta Platforms"
+  },
+  "MCHP": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Microchip Technology"
+  },
+  "MU": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Micron Technology"
+  },
+  "MSFT": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Microsoft"
+  },
+  "MSTR": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "MicroStrategy"
+  },
+  "MDLZ": {
+    "sector": "Consumer Staples",
+    "sector_kr": "필수소비재",
+    "name": "Mondelez International"
+  },
+  "MPWR": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Monolithic Power Systems"
+  },
+  "MNST": {
+    "sector": "Consumer Staples",
+    "sector_kr": "필수소비재",
+    "name": "Monster Beverage"
+  },
+  "NBIS": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Nebius Group"
+  },
+  "NFLX": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Netflix, Inc."
+  },
+  "NVDA": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Nvidia"
+  },
+  "NXPI": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "NXP Semiconductors"
+  },
+  "ORLY": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "O'Reilly Automotive"
+  },
+  "ODFL": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Old Dominion Freight Line"
+  },
+  "PCAR": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Paccar"
+  },
+  "PLTR": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Palantir Technologies"
+  },
+  "PANW": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Palo Alto Networks"
+  },
+  "PAYX": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Paychex"
+  },
+  "PYPL": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "PayPal"
+  },
+  "PDD": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "PDD Holdings"
+  },
+  "PEP": {
+    "sector": "Consumer Staples",
+    "sector_kr": "필수소비재",
+    "name": "PepsiCo"
+  },
+  "QCOM": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Qualcomm"
+  },
+  "REGN": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Regeneron Pharmaceuticals"
+  },
+  "RKLB": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Rocket Lab"
+  },
+  "ROP": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Roper Technologies"
+  },
+  "ROST": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Ross Stores"
+  },
+  "SNDK": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Sandisk"
+  },
+  "STX": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Seagate Technology"
+  },
+  "SHOP": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Shopify"
+  },
+  "SBUX": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Starbucks"
+  },
+  "SNPS": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Synopsys"
+  },
+  "TMUS": {
+    "sector": "Communication Services",
+    "sector_kr": "커뮤니케이션",
+    "name": "T-Mobile US"
+  },
+  "TTWO": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Take-Two Interactive"
+  },
+  "TER": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Teradyne"
+  },
+  "TSLA": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Tesla, Inc."
+  },
+  "TXN": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Texas Instruments"
+  },
+  "TRI": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Thomson Reuters"
+  },
+  "VRTX": {
+    "sector": "Health Care",
+    "sector_kr": "헬스케어",
+    "name": "Vertex Pharmaceuticals"
+  },
+  "WMT": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Walmart"
+  },
+  "WBD": {
+    "sector": "Consumer Discretionary",
+    "sector_kr": "자유소비재",
+    "name": "Warner Bros. Discovery"
+  },
+  "WDC": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Western Digital"
+  },
+  "WDAY": {
+    "sector": "Information Technology",
+    "sector_kr": "IT/기술",
+    "name": "Workday, Inc."
+  },
+  "XEL": {
+    "sector": "Utilities",
+    "sector_kr": "유틸리티",
+    "name": "Xcel Energy"
+  }
+}

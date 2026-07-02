@@ -118,6 +118,10 @@ def evaluate_s2(df: pd.DataFrame, qqq_close: pd.Series | None, s2cfg: dict) -> d
     pbcfg = s2cfg.get("pullback", {})
     tcfg = s2cfg.get("trigger", {})
 
+    # 최소 길이 가드: 눌림 창조차 못 채우면 어떤 층도 판정 불가 → None(스킵)
+    if len(df) < int(pbcfg.get("lookback", 10)) + 1:
+        return None
+
     close, high, low = df["Close"], df["High"], df["Low"]
 
     # D14 / S2-a — 상대강도 (QQQ 없음 → None = 판정불가)

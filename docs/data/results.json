@@ -1,0 +1,187 @@
+{
+ "as_of": "2026-07-01",
+ "generated_at": "2026-07-02T07:09:36Z",
+ "stale": false,
+ "universe_count": 101,
+ "regime": {
+  "enabled": true,
+  "ok": true,
+  "qqq_close": 725.17,
+  "qqq_sma200": 632.87
+ },
+ "counts": {
+  "s1": 3,
+  "s2": 0,
+  "both": 0
+ },
+ "config_summary": {
+  "s1": "MACD(12/26/9) GC + SlowK>=50 + $vol>=50,000,000",
+  "s2": "regime(QQQ>SMA200) + RS 상위25% + 정배열 + 눌림3~8% 회복"
+ },
+ "errors_count": 0,
+ "errors": [],
+ "warnings": [],
+ "sectors": [
+  {
+   "key": "산업재",
+   "color": "#64748B",
+   "count_s1": 1,
+   "count_s2": 0
+  },
+  {
+   "key": "자유소비재",
+   "color": "#F59E0B",
+   "count_s1": 1,
+   "count_s2": 0
+  },
+  {
+   "key": "IT/기술",
+   "color": "#3B82F6",
+   "count_s1": 1,
+   "count_s2": 0
+  }
+ ],
+ "items": [
+  {
+   "ticker": "ADP",
+   "name": "Automatic Data Processing",
+   "sector": "Industrials",
+   "sector_kr": "산업재",
+   "price": 235.73,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-01",
+    "slow_k": 72.02,
+    "slow_d": 58.19,
+    "macd": 2.078,
+    "signal": 1.6306,
+    "hist": 0.4475,
+    "avg_dollar_volume": 679901617.0,
+    "sma200": 236.49,
+    "vol_ratio": 0.98,
+    "adx": 17.2,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.9294,
+    "rs_6m": 0.7879,
+    "sma50": 216.77,
+    "sma200": 236.49,
+    "drawdown": -0.2208,
+    "pullback_low_pct": -0.0457,
+    "trigger": "breakout",
+    "vol_ratio": 0.98,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": false,
+     "cond_pullback": true,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "AMZN",
+   "name": "Amazon",
+   "sector": "Consumer Discretionary",
+   "sector_kr": "자유소비재",
+   "price": 241.7,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-01",
+    "slow_k": 59.48,
+    "slow_d": 45.64,
+    "macd": -5.0608,
+    "signal": -5.5309,
+    "hist": 0.4701,
+    "avg_dollar_volume": 15172245962.0,
+    "sma200": 232.93,
+    "vol_ratio": 0.84,
+    "adx": 28.4,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.9227,
+    "rs_6m": 0.8896,
+    "sma50": 255.56,
+    "sma200": 232.93,
+    "drawdown": -0.1211,
+    "pullback_low_pct": -0.0828,
+    "trigger": "breakout",
+    "vol_ratio": 0.84,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": true,
+     "cond_pullback": false,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "APP",
+   "name": "AppLovin",
+   "sector": "Information Technology",
+   "sector_kr": "IT/기술",
+   "price": 564.61,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-01",
+    "slow_k": 77.89,
+    "slow_d": 57.64,
+    "macd": -1.2233,
+    "signal": -4.9511,
+    "hist": 3.7278,
+    "avg_dollar_volume": 2769482651.0,
+    "sma200": 540.24,
+    "vol_ratio": 1.08,
+    "adx": 18.4,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 1.1279,
+    "rs_6m": 0.6901,
+    "sma50": 499.56,
+    "sma200": 540.24,
+    "drawdown": -0.2304,
+    "pullback_low_pct": -0.1932,
+    "trigger": "breakout",
+    "vol_ratio": 1.08,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": false,
+     "cond_pullback": false,
+     "cond_trigger": false,
+     "cond_rs_top": true
+    }
+   }
+  }
+ ]
+}
