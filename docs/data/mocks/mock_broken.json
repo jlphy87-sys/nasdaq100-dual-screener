@@ -1,0 +1,8 @@
+{
+  "as_of": 20260701,
+  "stale": "yes",
+  "regime": "broken",
+  "counts": [1, 2],
+  "sectors": { "not": "a list" },
+  "items": "oops-not-a-list"
+}

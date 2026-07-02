@@ -1,0 +1,14 @@
+{
+  "name": "NDX 듀얼 스크리너",
+  "short_name": "NDX듀얼",
+  "description": "나스닥100 일일 듀얼 모멘텀 스크리너 (반전 초기 + 추세 눌림목)",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

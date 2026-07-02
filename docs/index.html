@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>NDX 듀얼 스크리너</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- 당겨서 새로고침 인디케이터 -->
+  <div id="ptr" class="ptr" aria-hidden="true"><span class="ptr-spin"></span></div>
+
+  <header class="app-header">
+    <div class="header-top">
+      <div>
+        <h1 class="title">오늘의 스크린</h1>
+        <div class="subtitle">
+          기준일 <strong id="as-of">—</strong>
+          · 유니버스 <strong id="universe-count">—</strong>
+        </div>
+      </div>
+      <button id="refresh-btn" class="icon-btn" title="새로고침" aria-label="새로고침">⟳</button>
+    </div>
+
+    <div id="stale-banner" class="banner banner-warn hidden">
+      ⚠ 데이터가 최신이 아닐 수 있습니다 (마지막 거래일 기준).
+    </div>
+    <div id="error-banner" class="banner banner-error hidden"></div>
+
+    <p class="disclaimer">
+      개인용 분석 도구이며 투자 자문이 아닙니다. 결과는 후보일 뿐, 매매 판단은 사용자의 몫입니다.
+    </p>
+
+    <!-- ★탭 바: 두 스크린 구분의 핵심 -->
+    <div class="tabbar" role="tablist" aria-label="스크린 선택">
+      <button id="tab-s1" class="tab active" role="tab" data-tab="s1">
+        <span class="tab-title">스크리닝1 <span id="count-s1" class="tab-n">0</span></span>
+        <span class="tab-sub">반전 초기 포착</span>
+      </button>
+      <button id="tab-s2" class="tab" role="tab" data-tab="s2">
+        <span class="tab-title">스크리닝2 <span id="count-s2" class="tab-n">0</span></span>
+        <span class="tab-sub">추세 눌림목</span>
+      </button>
+      <button id="tab-both" class="tab" role="tab" data-tab="both">
+        <span class="tab-title">겹침 <span id="count-both" class="tab-n">0</span></span>
+        <span class="tab-sub">두 전략 동시</span>
+      </button>
+    </div>
+
+    <!-- 체제 안내 (S2 탭 전용, 정보색 — 에러 아님) -->
+    <div id="regime-banner" class="banner banner-info hidden"></div>
+
+    <!-- 섹터 칩 (가로 스크롤, 다중 선택) -->
+    <div id="sector-chips" class="chips" role="group" aria-label="섹터 필터"></div>
+
+    <!-- 정렬 + 보기 토글 -->
+    <div class="controls">
+      <label class="ctl">
+        정렬
+        <select id="sort-select"></select>
+      </label>
+      <div class="view-toggle" role="tablist" aria-label="보기 전환">
+        <button id="view-group" class="seg active" role="tab">섹터별</button>
+        <button id="view-flat" class="seg" role="tab">전체</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="content"><div class="loading">불러오는 중…</div></main>
+
+  <footer class="app-footer">
+    <span id="meta-line">—</span>
+  </footer>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="./app.logic.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

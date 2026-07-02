@@ -1,0 +1,12 @@
+{
+  "as_of": "2026-07-01",
+  "generated_at": "2026-07-02T03:00:00Z",
+  "stale": false,
+  "universe_count": 101,
+  "regime": { "enabled": true, "ok": true, "qqq_close": 725.17, "qqq_sma200": 632.87 },
+  "counts": { "s1": 0, "s2": 0, "both": 0 },
+  "config_summary": { "s1": "MACD GC + SlowK>=50 + $vol", "s2": "regime+RS+정배열+눌림회복" },
+  "errors_count": 0,
+  "sectors": [],
+  "items": []
+}

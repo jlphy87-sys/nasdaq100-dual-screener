@@ -1,0 +1,210 @@
+/* app.logic.js — DOM 없는 순수 로직 (전역 AppLogic).
+ * 불신(§10): 깨진/구버전/빈 results.json 이 와도 sanitize 가 안전한 형태로 정규화.
+ * regime.ok 는 3상(true/false/null)을 보존한다 — null=판정불가는 false 와 다른 상태.
+ * app.js(DOM)와 테스트(py_mini_racer)가 이 파일을 공유한다.
+ */
+var AppLogic = (function () {
+  "use strict";
+
+  function num(v) { return (typeof v === "number" && isFinite(v)) ? v : null; }
+  function str(v) {
+    if (typeof v === "string") return v;
+    if (typeof v === "number" && isFinite(v)) return String(v);
+    return null;
+  }
+  function bool(v) { return v === true; }
+  function tri(v) { return v === true ? true : (v === false ? false : null); }
+
+  function esc(s) {
+    if (s == null) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function fmtMoney(v) {
+    v = num(v);
+    if (v == null) return "—";
+    if (v >= 1e9) return "$" + (v / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+    if (v >= 1e6) return "$" + Math.round(v / 1e6) + "M";
+    return "$" + Math.round(v).toLocaleString();
+  }
+
+  function fmtNum(v, digits) {
+    v = num(v);
+    if (v == null) return "—";
+    return v.toFixed(digits == null ? 2 : digits);
+  }
+
+  function fmtPct(v, digits) {
+    v = num(v);
+    if (v == null) return "—";
+    return (v * 100).toFixed(digits == null ? 1 : digits) + "%";
+  }
+
+  function sanitizeS1(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    return {
+      gc_date: str(raw.gc_date),
+      slow_k: num(raw.slow_k), slow_d: num(raw.slow_d),
+      macd: num(raw.macd), signal: num(raw.signal), hist: num(raw.hist),
+      avg_dollar_volume: num(raw.avg_dollar_volume),
+      sma200: num(raw.sma200), vol_ratio: num(raw.vol_ratio), adx: num(raw.adx)
+    };
+  }
+
+  function sanitizeS2(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    return {
+      rs_3m: num(raw.rs_3m), rs_6m: num(raw.rs_6m),
+      sma50: num(raw.sma50), sma200: num(raw.sma200),
+      drawdown: num(raw.drawdown), pullback_low_pct: num(raw.pullback_low_pct),
+      trigger: str(raw.trigger), vol_ratio: num(raw.vol_ratio)
+    };
+  }
+
+  function sanitizeItem(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var ticker = str(raw.ticker);
+    if (!ticker) return null;
+    return {
+      ticker: ticker,
+      name: str(raw.name) || ticker,
+      sector: str(raw.sector) || "",
+      sector_kr: str(raw.sector_kr) || "미분류",
+      price: num(raw.price),
+      pass_s1: bool(raw.pass_s1),
+      pass_s2: bool(raw.pass_s2),
+      s1: sanitizeS1(raw.s1),
+      s2: sanitizeS2(raw.s2)
+    };
+  }
+
+  function sanitize(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var items = [];
+    if (Array.isArray(raw.items)) {
+      for (var i = 0; i < raw.items.length; i++) {
+        var it = sanitizeItem(raw.items[i]);
+        if (it) items.push(it);
+      }
+    }
+    var sectors = [];
+    if (Array.isArray(raw.sectors)) {
+      for (var j = 0; j < raw.sectors.length; j++) {
+        var s = raw.sectors[j];
+        if (!s || typeof s !== "object") continue;
+        var key = str(s.key);
+        if (!key) continue;
+        sectors.push({
+          key: key,
+          color: str(s.color) || "#9CA3AF",
+          count_s1: num(s.count_s1) || 0,
+          count_s2: num(s.count_s2) || 0
+        });
+      }
+    }
+    var regime = (raw.regime && typeof raw.regime === "object") ? raw.regime : {};
+    var counts = (raw.counts && typeof raw.counts === "object") ? raw.counts : {};
+    // counts 누락/불일치 방어: items 에서 재계산 가능해야 앱이 일관 표시
+    var n1 = 0, n2 = 0, nb = 0;
+    for (var k = 0; k < items.length; k++) {
+      if (items[k].pass_s1) n1++;
+      if (items[k].pass_s2) n2++;
+      if (items[k].pass_s1 && items[k].pass_s2) nb++;
+    }
+    var cs = (raw.config_summary && typeof raw.config_summary === "object")
+      ? raw.config_summary : {};
+    return {
+      as_of: str(raw.as_of),
+      generated_at: str(raw.generated_at),
+      stale: bool(raw.stale),
+      universe_count: num(raw.universe_count),
+      regime: {
+        enabled: regime.enabled !== false,
+        ok: tri(regime.ok),
+        qqq_close: num(regime.qqq_close),
+        qqq_sma200: num(regime.qqq_sma200)
+      },
+      counts: {
+        s1: num(counts.s1) != null ? num(counts.s1) : n1,
+        s2: num(counts.s2) != null ? num(counts.s2) : n2,
+        both: num(counts.both) != null ? num(counts.both) : nb
+      },
+      config_summary: { s1: str(cs.s1), s2: str(cs.s2) },
+      errors_count: num(raw.errors_count) || 0,
+      sectors: sectors,
+      items: items
+    };
+  }
+
+  // ---- 탭/필터/정렬/그룹 ----------------------------------------------------
+  function itemsForTab(items, tab) {
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (tab === "s1" && it.pass_s1) out.push(it);
+      else if (tab === "s2" && it.pass_s2) out.push(it);
+      else if (tab === "both" && it.pass_s1 && it.pass_s2) out.push(it);
+    }
+    return out;
+  }
+
+  function sortValue(it, key) {
+    if (key === "dollar_volume") return it.s1 ? it.s1.avg_dollar_volume : null;
+    if (key === "slow_k") return it.s1 ? it.s1.slow_k : null;
+    if (key === "rs_3m") return it.s2 ? it.s2.rs_3m : null;
+    if (key === "drawdown") return it.s2 ? it.s2.drawdown : null;
+    return null;
+  }
+
+  function filterSort(items, activeSectors, sortKey) {
+    var act = activeSectors || [];
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      if (act.length === 0 || act.indexOf(items[i].sector_kr) !== -1) out.push(items[i]);
+    }
+    out.sort(function (a, b) {
+      if (sortKey === "name") return a.ticker < b.ticker ? -1 : (a.ticker > b.ticker ? 1 : 0);
+      var va = sortValue(a, sortKey), vb = sortValue(b, sortKey);
+      if (va == null && vb == null) return a.ticker < b.ticker ? -1 : 1;
+      if (va == null) return 1;   // null 은 뒤로
+      if (vb == null) return -1;
+      return vb - va;             // 값 내림차순 (drawdown 도 0 에 가까운 순)
+    });
+    return out;
+  }
+
+  function groupBySector(items, sectorOrder) {
+    var order = sectorOrder || [];
+    var map = {}, keys = [];
+    for (var i = 0; i < items.length; i++) {
+      var k = items[i].sector_kr;
+      if (!map[k]) { map[k] = []; keys.push(k); }
+      map[k].push(items[i]);
+    }
+    keys.sort(function (a, b) {
+      var ia = order.indexOf(a), ib = order.indexOf(b);
+      if (ia === -1) ia = 999;
+      if (ib === -1) ib = 999;
+      return ia - ib;
+    });
+    var groups = [];
+    for (var j = 0; j < keys.length; j++) {
+      groups.push({ key: keys[j], items: map[keys[j]] });
+    }
+    return groups;
+  }
+
+  return {
+    sanitize: sanitize,
+    itemsForTab: itemsForTab,
+    filterSort: filterSort,
+    groupBySector: groupBySector,
+    fmtMoney: fmtMoney,
+    fmtNum: fmtNum,
+    fmtPct: fmtPct,
+    esc: esc
+  };
+})();
+
+if (typeof module !== "undefined" && module.exports) module.exports = AppLogic;

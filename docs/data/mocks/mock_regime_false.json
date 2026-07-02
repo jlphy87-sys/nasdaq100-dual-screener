@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-07-01",
+  "generated_at": "2026-07-02T03:00:00Z",
+  "stale": false,
+  "universe_count": 101,
+  "regime": { "enabled": true, "ok": false, "qqq_close": 598.4, "qqq_sma200": 632.87 },
+  "counts": { "s1": 1, "s2": 0, "both": 0 },
+  "config_summary": { "s1": "MACD GC + SlowK>=50 + $vol", "s2": "regime+RS+정배열+눌림회복" },
+  "errors_count": 0,
+  "sectors": [
+    { "key": "헬스케어", "color": "#10B981", "count_s1": 1, "count_s2": 0 }
+  ],
+  "items": [
+    {
+      "ticker": "AMGN", "name": "Amgen", "sector": "Health Care", "sector_kr": "헬스케어",
+      "price": 312.4, "pass_s1": true, "pass_s2": false,
+      "s1": { "gc_date": "2026-07-01", "slow_k": 55.0, "slow_d": 50.1, "macd": 0.44, "signal": 0.35,
+              "hist": 0.09, "avg_dollar_volume": 1600000000, "sma200": 289.7, "vol_ratio": 1.2, "adx": 16.8 }
+    }
+  ]
+}
