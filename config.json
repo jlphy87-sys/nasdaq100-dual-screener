@@ -1,0 +1,23 @@
+{
+  "universe": ["ndx"],
+  "history_days": 400,
+  "s1": {
+    "macd": { "fast": 12, "slow": 26, "signal": 9, "gc_lookback_days": 1, "require_below_zero": false },
+    "stochastic": { "k_period": 14, "slow_k": 3, "slow_d": 3, "line": "k", "min": 50 },
+    "volume": { "avg_window": 20, "min_avg_dollar_volume": 50000000 },
+    "trend": { "enabled": false, "sma_period": 200, "skip_if_insufficient": true },
+    "volume_surge": { "enabled": false, "vol_window": 20, "vol_mult": 1.5 },
+    "adx": { "enabled": false, "period": 14, "min": 20 },
+    "sort_by": "dollar_volume"
+  },
+  "s2": {
+    "regime": { "enabled": true, "benchmark": "QQQ", "sma_period": 200 },
+    "rs": { "short_bars": 63, "long_bars": 126, "dual_period": true, "top_pct": 25 },
+    "structure": { "sma_fast": 50, "sma_slow": 200 },
+    "max_drawdown": -0.15,
+    "pullback": { "lookback": 10, "min": 0.03, "max": 0.08 },
+    "trigger": { "mode": "breakout", "recent_high_bars": 5, "vol_mult": 1.3 },
+    "sort_by": "rs_3m"
+  },
+  "debug_show_all": false
+}
