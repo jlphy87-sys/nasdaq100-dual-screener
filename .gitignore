@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .pytest_cache/
 backend/data/cache/
+# 로컬 메모장용 사본 (원본은 README.md — 이중 관리 방지를 위해 저장소 제외)
+README(메모장용).txt
