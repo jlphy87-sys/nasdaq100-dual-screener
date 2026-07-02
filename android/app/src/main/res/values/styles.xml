@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 웹앱 다크 배경(#0a0f1a)과 동일 — 실행 시 흰 화면 번쩍임 방지 -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0a0f1a</item>
+        <item name="android:statusBarColor">#101a30</item>
+        <item name="android:navigationBarColor">#0a0f1a</item>
+    </style>
+</resources>

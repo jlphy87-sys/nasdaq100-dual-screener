@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.jlphy.ndxscreener'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.jlphy.ndxscreener"
+        minSdk 24            // Android 7.0+ (WebView 서비스워커 지원 하한)
+        targetSdk 34
+        // CI 가 run_number 로 주입 → 재빌드마다 버전 증가 (업데이트 설치 가능 조건)
+        versionCode Integer.parseInt(System.getenv("APK_VERSION_CODE") ?: "1")
+        versionName (System.getenv("APK_VERSION_NAME") ?: "1.0")
+    }
+
+    /* 서명: 키는 CI 실행 중 즉석 생성(기본) 또는 APK_KEYSTORE_B64 시크릿(선택).
+     * 이 키는 사이드로드 서명용일 뿐 비밀을 보호하지 않음 — 비밀번호가 코드에
+     * 있어도 무해 (키 자체가 저장소에 없음). 스토어 배포 시엔 반드시 시크릿 사용. */
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE_FILE") ?: "../release.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "ndx-screener"
+            keyAlias System.getenv("KEY_ALIAS") ?: "ndx"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "ndx-screener"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false   // 의존성 0개 단일 액티비티 — 축소 이득 없음
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

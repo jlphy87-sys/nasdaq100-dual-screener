@@ -1,0 +1,76 @@
+# build-apk: android/ WebView 래퍼를 빌드해 서명된 APK를 GitHub Release 로 발행.
+# 실행: Actions 탭 → build-apk → Run workflow (수동 전용 — 매일 돌릴 필요 없음.
+#       APK 는 웹앱을 원격 로드하므로 UI 가 바뀌어도 재빌드 불필요).
+#
+# 서명 키 정책 (키 위생 §10):
+#  - 기본: 실행 중 즉석 생성 → 저장소·로그에 키 없음. 대신 빌드마다 서명이 달라져
+#    기존 설치 위에 업데이트하려면 이전 앱을 지우고 설치해야 함 (개인용이라 허용).
+#  - 탈출구: 서명을 고정하고 싶으면 keystore 를 base64 로 APK_KEYSTORE_B64 시크릿에
+#    등록 (storepass/keypass=ndx-screener, alias=ndx 로 만들었을 때). 그러면 그 키로 서명.
+name: build-apk
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # Release 생성용
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.9"
+
+      - name: Prepare signing keystore
+        env:
+          KS_B64: ${{ secrets.APK_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > android/release.keystore
+            echo "keystore: secret 사용 (서명 고정)"
+          else
+            keytool -genkeypair -keystore android/release.keystore \
+              -storepass ndx-screener -keypass ndx-screener -alias ndx \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=NDX Dual Screener"
+            echo "keystore: 즉석 생성 (빌드마다 서명 달라짐 — 재설치 시 기존 앱 삭제 필요)"
+          fi
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/android/release.keystore
+          APK_VERSION_CODE: ${{ github.run_number }}
+          APK_VERSION_NAME: "1.${{ github.run_number }}"
+        run: gradle -p android assembleRelease --no-daemon
+
+      - name: Publish to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="apk-v1.${{ github.run_number }}"
+          cp android/app/build/outputs/apk/release/app-release.apk ndx-screener.apk
+          gh release create "$TAG" ndx-screener.apk \
+            --title "NDX 스크리너 APK v1.${{ github.run_number }}" \
+            --latest \
+            --notes "안드로이드 설치용 APK.
+
+**설치 방법 (폰에서)**
+1. 이 페이지의 \`ndx-screener.apk\` 를 탭해 다운로드
+2. 다운로드 알림/파일을 열면 '출처를 알 수 없는 앱' 허용을 물음 → Chrome(또는 파일 앱)에 설치 허용
+3. 설치 → 앱 서랍에 'NDX 스크리너'
+
+이전 버전이 이미 설치돼 있고 '앱이 설치되지 않았습니다'가 나오면, 기존 앱을 삭제한 뒤 다시 설치하세요 (빌드마다 서명 키가 새로 생성되기 때문 — 데이터 손실 없음, 결과는 서버에서 다시 받아옴)."

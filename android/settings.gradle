@@ -1,0 +1,22 @@
+/* D17: APK = PWA를 감싸는 최소 WebView 래퍼 (D0에 예약해 둔 탈출구).
+ * 이유: 사용자가 스토어 없이 APK 설치를 원함. TWA는 assetlinks.json + 서명키
+ *       지문 결합이 필요해 관리 부담 → 의존성 0개 WebView가 가장 단순.
+ * 비용: 크롬 대신 시스템 WebView 엔진 사용 (기능상 동일, SW/localStorage 지원).
+ * 탈출구: 스토어 배포가 필요해지면 이 디렉터리를 Bubblewrap TWA로 교체.
+ */
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "ndx-screener"
+include ':app'

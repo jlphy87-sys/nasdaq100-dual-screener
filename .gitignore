@@ -5,3 +5,11 @@ __pycache__/
 backend/data/cache/
 # 로컬 메모장용 사본 (원본은 README.md — 이중 관리 방지를 위해 저장소 제외)
 README(메모장용).txt
+# 안드로이드 빌드 산출물 + 서명키 (키는 절대 커밋 금지 — §10 키 위생)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/release.keystore
+*.keystore
+*.jks

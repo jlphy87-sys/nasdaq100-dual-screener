@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NDX 스크리너</string>
+    <string name="offline_title">오프라인 상태입니다</string>
+    <string name="offline_body">네트워크 연결을 확인한 뒤 다시 시도하세요.\n(한 번이라도 접속했다면 앱 안에서 마지막 결과가 캐시로 보입니다.)</string>
+    <string name="retry">다시 시도</string>
+</resources>
