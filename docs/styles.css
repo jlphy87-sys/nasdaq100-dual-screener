@@ -218,4 +218,7 @@ body {
 .ptr.spin .ptr-spin { animation: rot 0.8s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
 
+/* ⟳ 버튼 새로고침 중: 버튼 자체가 회전 (레이아웃 밀림 없음), 연타 차단 */
+.icon-btn.spinning { animation: rot 0.8s linear infinite; opacity: 0.65; pointer-events: none; }
+
 .hidden { display: none !important; }

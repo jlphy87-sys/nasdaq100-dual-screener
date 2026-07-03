@@ -45,8 +45,10 @@
     revalidate(true);
   }
 
+  // 결과 문자열("updated"|"same"|"error")로 resolve — 수동 새로고침 UI가 완료 시점·결과에 반응.
+  // .finally 는 테스트의 동기 thenable 스텁이 미지원이라 then/catch 만 사용.
   function revalidate(allowToast) {
-    fetch(DATA_URL, { cache: "no-store" })
+    return fetch(DATA_URL, { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (json) {
         var clean = sanitize(json);
@@ -58,11 +60,27 @@
         try { localStorage.setItem(LS_KEY, JSON.stringify(json)); } catch (e) {}
         hideError();
         if (allowToast && prev && isNewer) showToast("업데이트됨");
+        return isNewer ? "updated" : "same";
       })
       .catch(function (err) {
         // 네트워크/형식 실패: 캐시가 있으면 그대로 두고, 없으면 안내
         if (!state.data) showError("결과를 불러오지 못했습니다. 연결을 확인하고 새로고침하세요.");
+        return "error";
       });
+  }
+
+  // 수동 새로고침(버튼·당김) 공통: 실제 완료까지 스피너 유지(최소 minMs — 깜빡임 방지),
+  // 변화가 없어도 반드시 피드백을 준다 ("눌렀는데 반응 없음" 방지).
+  function manualRefresh(minMs, done) {
+    var started = Date.now();
+    revalidate(true).then(function (result) {
+      var wait = Math.max(0, minMs - (Date.now() - started));
+      setTimeout(function () {
+        done();
+        if (result === "same") showToast("이미 최신입니다");
+        else if (result === "error" && state.data) showToast("연결 실패 — 마지막 결과 표시 중");
+      }, wait);
+    });
   }
 
   function setData(raw, persist) {
@@ -296,7 +314,10 @@
       document.getElementById("tab-" + t).addEventListener("click", function () { setTab(t); });
     });
     document.getElementById("refresh-btn").addEventListener("click", function () {
-      spinPtr(true); revalidate(true); setTimeout(function () { spinPtr(false); }, 600);
+      var btn = document.getElementById("refresh-btn");
+      if (btn.classList.contains("spinning")) return; // 연타 방지
+      btn.classList.add("spinning");
+      manualRefresh(500, function () { btn.classList.remove("spinning"); });
     });
     document.getElementById("sort-select").addEventListener("change", function (e) {
       state.sort[state.tab] = e.target.value;
@@ -348,7 +369,7 @@
       if (!pulling) return;
       var dy = (e.changedTouches[0].clientY - startY);
       pulling = false;
-      if (dy > 90) { spinPtr(true); revalidate(true); setTimeout(function () { spinPtr(false); }, 700); }
+      if (dy > 90) { spinPtr(true); manualRefresh(600, function () { spinPtr(false); }); }
       else spinPtr(false);
     });
   }

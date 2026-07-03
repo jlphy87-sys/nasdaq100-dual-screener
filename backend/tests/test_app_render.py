@@ -163,3 +163,13 @@ def test_render_network_fail_no_cache_shows_error():
     c = _mount(_mock("good"), fetch_ok=False)
     hidden = c.eval("document.getElementById('error-banner').classList.contains('hidden')")
     assert hidden is False  # 에러 배너 노출
+
+
+def test_refresh_button_click_spins_without_crash():
+    # ⟳ 버튼: 클릭 즉시 spinning 클래스(버튼 회전)가 붙고 예외가 없어야 한다.
+    # 스텁 setTimeout 은 콜백을 실행하지 않으므로 해제 타이밍은 브라우저 전용.
+    c = _mount(_mock("good"))
+    c.eval("document.getElementById('refresh-btn')._handlers.click()")
+    assert c.eval("document.getElementById('refresh-btn').classList.contains('spinning')") is True
+    # spinning 중 재클릭은 무시(연타 방지) — 예외 없이 통과해야 함
+    c.eval("document.getElementById('refresh-btn')._handlers.click()")
