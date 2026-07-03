@@ -62,6 +62,21 @@ var AppLogic = (function () {
     };
   }
 
+  // 차트는 부가 정보: 값이 하나라도 오염(비수치/0 이하)이면 차트만 버리고 카드는 산다.
+  // 길이 상한 260 — 변조로 거대 배열이 와도 렌더 비용을 제한.
+  function sanitizeChart(raw) {
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.closes)) return null;
+    if (raw.closes.length > 260) return null;
+    var closes = [];
+    for (var i = 0; i < raw.closes.length; i++) {
+      var v = num(raw.closes[i]);
+      if (v == null || v <= 0) return null;
+      closes.push(v);
+    }
+    if (closes.length < 2) return null;
+    return { closes: closes, start: str(raw.start), end: str(raw.end) };
+  }
+
   function sanitizeItem(raw) {
     if (!raw || typeof raw !== "object") return null;
     var ticker = str(raw.ticker);
@@ -75,7 +90,8 @@ var AppLogic = (function () {
       pass_s1: bool(raw.pass_s1),
       pass_s2: bool(raw.pass_s2),
       s1: sanitizeS1(raw.s1),
-      s2: sanitizeS2(raw.s2)
+      s2: sanitizeS2(raw.s2),
+      chart: sanitizeChart(raw.chart)
     };
   }
 

@@ -245,8 +245,8 @@
         "</div>";
     }
 
-    // 확장: 해당 스크린 전체 사용값 + (both 면) 반대쪽 값도 (명세 §8)
-    var detail = "";
+    // 확장: 미니 차트(있으면) + 해당 스크린 전체 사용값 + (both 면) 반대쪽 값도 (명세 §8)
+    var detail = it.chart ? chartHtml(it.chart) : "";
     if (it.s1 && (showS1 || both)) {
       detail += '<div class="detail-title">S1 · 반전 초기</div><div class="card-detail">' +
         dv("MACD", fmtNum(it.s1.macd, 4)) + dv("Signal", fmtNum(it.s1.signal, 4)) +
@@ -273,6 +273,32 @@
       '<span class="badges">' + badge + '</span><span class="chev">▼</span></div>' +
       row2 + detail + "</article>";
   }
+  // 종가 시리즈 → 인라인 SVG 라인차트 (라이브러리 0, 오프라인 동작).
+  // 데이터는 sanitizeChart 를 통과한 것만 온다 (양수 숫자 2~260개 보장).
+  function chartHtml(ch) {
+    var c = ch.closes, n = c.length;
+    var W = 320, H = 84, TOP = 6, BOT = 6;
+    var min = Math.min.apply(null, c), max = Math.max.apply(null, c);
+    var span = (max - min) || 1;
+    var pts = [];
+    for (var i = 0; i < n; i++) {
+      var x = (i / (n - 1)) * W;
+      var y = TOP + (1 - (c[i] - min) / span) * (H - TOP - BOT);
+      pts.push(x.toFixed(1) + "," + y.toFixed(1));
+    }
+    var chg = c[n - 1] / c[0] - 1;
+    var cls = chg >= 0 ? "pos" : "neg";
+    var line = pts.join(" ");
+    var area = "0," + H + " " + line + " " + W + "," + H;
+    return '<div class="chart-wrap ' + cls + '">' +
+      '<svg class="spark" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<polygon class="spark-area" points="' + area + '"/>' +
+      '<polyline class="spark-line" fill="none" points="' + line + '"/></svg>' +
+      '<div class="chart-cap"><span>' + esc(ch.start || "") + " ~ " + esc(ch.end || "") + " · " + n + '봉</span>' +
+      '<span>저 ' + fmtNum(min, 2) + " · 고 " + fmtNum(max, 2) +
+      ' · <b class="' + cls + '">' + (chg >= 0 ? "+" : "") + fmtPct(chg) + "</b></span></div></div>";
+  }
+
   function kv(k, v) { return '<span class="kv"><span class="k">' + k + '</span><br><span class="v">' + v + "</span></span>"; }
   function dv(k, v) { return '<span><span class="k">' + k + '</span><br><span class="v">' + v + "</span></span>"; }
 

@@ -173,3 +173,23 @@ def test_refresh_button_click_spins_without_crash():
     assert c.eval("document.getElementById('refresh-btn').classList.contains('spinning')") is True
     # spinning 중 재클릭은 무시(연타 방지) — 예외 없이 통과해야 함
     c.eval("document.getElementById('refresh-btn')._handlers.click()")
+
+
+def test_render_chart_svg_when_chart_data_present():
+    m = _mock("good")
+    m["items"][0]["chart"] = {"closes": [100.0, 104.0, 98.5, 110.2],
+                              "start": "2026-04-01", "end": "2026-07-01"}
+    c = _mount(m)
+    html = _content(c)
+    assert "chart-wrap" in html and "spark-line" in html
+    assert "2026-04-01 ~ 2026-07-01" in html
+    assert "+10.2%" in html  # 100 → 110.2 기간 등락
+
+
+def test_render_chart_tampered_no_svg_no_crash():
+    m = _mock("good")
+    m["items"][0]["chart"] = {"closes": [100, "악성", -3]}
+    c = _mount(m)
+    html = _content(c)
+    assert "chart-wrap" not in html          # 차트만 조용히 생략
+    assert m["items"][0]["ticker"] in html   # 카드는 정상 렌더

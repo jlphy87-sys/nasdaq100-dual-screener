@@ -152,6 +152,18 @@ body {
 .detail-title { margin-top: 10px; font-size: 11px; font-weight: 800; color: var(--text-dim); display: none; letter-spacing: 0.4px; }
 .card.open .detail-title { display: block; }
 
+/* 미니 차트: 카드 펼침 시에만 노출. 색은 기간 등락(pos/neg)을 따른다 */
+.chart-wrap { display: none; margin-top: 10px; }
+.card.open .chart-wrap { display: block; animation: fadein 0.18s ease; }
+.spark { display: block; width: 100%; height: 84px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); }
+.chart-wrap .spark-line { stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+.chart-wrap.pos .spark-line { stroke: var(--pos); }
+.chart-wrap.neg .spark-line { stroke: var(--neg); }
+.chart-wrap.pos .spark-area { fill: var(--pos); opacity: 0.10; }
+.chart-wrap.neg .spark-area { fill: var(--neg); opacity: 0.10; }
+.chart-cap { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; font-size: 10.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.chart-cap b { font-weight: 800; }
+
 .sector-group { margin-bottom: 20px; }
 .sector-head {
   display: flex; align-items: center; gap: 8px; margin: 6px 2px 10px; font-weight: 800; font-size: 14px;

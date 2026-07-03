@@ -129,3 +129,36 @@ def test_formats():
     assert c.eval("AppLogic.fmtMoney(null)") == "—"
     assert c.eval("AppLogic.fmtPct(-0.062)") == "-6.2%"
     assert c.eval("AppLogic.fmtNum('bad')") == "—"
+
+
+# ---- chart 필드 (경계 4종: 정상/누락/변조/과대) --------------------------------
+def test_sanitize_chart_normal_and_missing():
+    c = _ctx()
+    good = _mock("good")
+    good["items"][0]["chart"] = {"closes": [100.0, 101.5, 99.2], "start": "2026-04-01", "end": "2026-07-01"}
+    out = _sanitize(c, good)
+    it0 = next(i for i in out["items"] if i["ticker"] == good["items"][0]["ticker"])
+    assert it0["chart"]["closes"] == [100.0, 101.5, 99.2]
+    assert it0["chart"]["start"] == "2026-04-01"
+    # chart 없는 나머지 종목은 null 정규화 (구버전 results.json 호환)
+    others = [i for i in out["items"] if i["ticker"] != it0["ticker"]]
+    assert all(i["chart"] is None for i in others)
+
+
+def test_sanitize_chart_tampered_dropped_card_survives():
+    c = _ctx()
+    good = _mock("good")
+    tk = good["items"][0]["ticker"]
+    for bad in (
+        {"closes": [100, "악성", 99]},          # 비수치 혼입
+        {"closes": [100, -5, 99]},              # 0 이하
+        {"closes": [100]},                      # 2개 미만
+        {"closes": [1.0] * 261},                # 길이 상한 초과
+        {"closes": "not-an-array"},
+        "not-an-object",
+    ):
+        good["items"][0]["chart"] = bad
+        out = _sanitize(c, good)
+        it0 = next(i for i in out["items"] if i["ticker"] == tk)
+        assert it0["chart"] is None            # 차트만 버림
+        assert it0["ticker"] == tk             # 카드는 산다

@@ -126,3 +126,26 @@ def test_debug_show_all_includes_failures():
     frames = {"QQQ": rising_qqq(), "CCC": make_ohlcv(np.linspace(100, 90, 300))}
     r = _build(frames, config=config)
     assert any(it["ticker"] == "CCC" for it in r["items"])
+
+
+def test_chart_field_present_and_bounded():
+    # 통과 종목에는 chart(최근 종가 시리즈)가 실린다 — 계약(§7) 필드 추가.
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
+    r = _build(frames)
+    it = next(i for i in r["items"] if i["ticker"] == "AAA")
+    ch = it["chart"]
+    bars = CONFIG.get("chart", {}).get("bars", 63)
+    assert 2 <= len(ch["closes"]) <= bars
+    assert all(isinstance(v, float) and v > 0 for v in ch["closes"])
+    assert ch["end"] and ch["start"] <= ch["end"]  # 날짜 존재·순서
+    # 마지막 종가 = 카드 price 와 동일 데이터 원천
+    assert abs(ch["closes"][-1] - it["price"]) < 0.01 * max(1.0, it["price"])
+
+
+def test_chart_disabled_by_knob():
+    config = json.loads(json.dumps(CONFIG))
+    config["chart"] = {"bars": 0}
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
+    r = _build(frames, config=config)
+    it = next(i for i in r["items"] if i["ticker"] == "AAA")
+    assert "chart" not in it

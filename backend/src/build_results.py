@@ -34,6 +34,28 @@ def _config_summary(config: dict) -> dict:
     }
 
 
+def _chart_block(close, bars: int) -> dict | None:
+    """통과 종목 카드용 미니 차트 데이터 — 최근 bars 봉 종가 (계약 §7: 필드 추가만).
+
+    이유: 앱에서 카드 펼침 시 오프라인·의존성 0 으로 차트를 그리기 위해 서버가
+          시리즈를 실어 보낸다 (외부 차트 위젯 대신). 비용: results.json 이
+          통과 종목당 ~0.5KB 증가. 탈출구: config.chart.bars=0 이면 생략.
+    """
+    if bars <= 0 or close is None:
+        return None
+    try:
+        c = close.dropna().tail(bars)
+        if len(c) < 2:
+            return None
+        return {
+            "closes": [round(float(v), 2) for v in c],
+            "start": pd.Timestamp(c.index[0]).strftime("%Y-%m-%d"),
+            "end": pd.Timestamp(c.index[-1]).strftime("%Y-%m-%d"),
+        }
+    except Exception:  # noqa: BLE001 — 차트는 부가 정보: 실패해도 카드는 산다
+        return None
+
+
 def build(
     config: dict,
     root: str,
@@ -51,6 +73,7 @@ def build(
     s1cfg = config["s1"]
     s2cfg = config["s2"]
     debug_show_all = bool(config.get("debug_show_all", False))
+    chart_bars = int(config.get("chart", {}).get("bars", 63))  # ~3개월 (0=차트 생략)
 
     # ---- 유니버스 (D2) ------------------------------------------------------
     warnings: list[str] = []
@@ -89,6 +112,7 @@ def build(
     errors: list[dict] = []
     s1_evals: dict[str, dict] = {}
     s2_evals: dict[str, dict] = {}
+    close_map: dict[str, pd.Series] = {}  # 카드 차트용 종가 시리즈 보관
     last_bar_dates: list[str] = []
 
     for ticker in tickers:
@@ -108,6 +132,8 @@ def build(
             if e2:
                 s2_evals[ticker] = e2
                 last_bar_dates.append(e2["last_bar_date"])
+            if (e1 or e2) and "Close" in df.columns:
+                close_map[ticker] = df["Close"]
         except Exception as e:  # noqa: BLE001 — 한 종목이 전체를 죽이지 않는다
             errors.append({"ticker": ticker, "reason": f"{type(e).__name__}: {e}"})
 
@@ -135,6 +161,9 @@ def build(
             "pass_s1": pass_s1,
             "pass_s2": pass_s2,
         }
+        chart = _chart_block(close_map.get(ticker), chart_bars)
+        if chart:
+            item["chart"] = chart
         if e1:
             item["s1"] = {
                 "gc_date": e1["gc_date"], "slow_k": e1["slow_k"], "slow_d": e1["slow_d"],
