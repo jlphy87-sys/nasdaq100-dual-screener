@@ -1,16 +1,16 @@
 {
- "as_of": "2026-07-01",
- "generated_at": "2026-07-02T12:40:36Z",
+ "as_of": "2026-07-02",
+ "generated_at": "2026-07-03T10:12:21Z",
  "stale": false,
  "universe_count": 101,
  "regime": {
   "enabled": true,
   "ok": true,
-  "qqq_close": 725.17,
-  "qqq_sma200": 632.87
+  "qqq_close": 712.6,
+  "qqq_sma200": 633.49
  },
  "counts": {
-  "s1": 5,
+  "s1": 7,
   "s2": 0,
   "both": 0
  },
@@ -25,7 +25,7 @@
   {
    "key": "IT/기술",
    "color": "#3B82F6",
-   "count_s1": 2,
+   "count_s1": 6,
    "count_s2": 0
   },
   {
@@ -33,134 +33,28 @@
    "color": "#64748B",
    "count_s1": 1,
    "count_s2": 0
-  },
-  {
-   "key": "자유소비재",
-   "color": "#F59E0B",
-   "count_s1": 1,
-   "count_s2": 0
-  },
-  {
-   "key": "소재",
-   "color": "#F97316",
-   "count_s1": 1,
-   "count_s2": 0
   }
  ],
  "items": [
   {
-   "ticker": "ADP",
-   "name": "Automatic Data Processing",
-   "sector": "Industrials",
-   "sector_kr": "산업재",
-   "price": 235.73,
-   "pass_s1": true,
-   "pass_s2": false,
-   "s1": {
-    "gc_date": "2026-07-01",
-    "slow_k": 72.02,
-    "slow_d": 58.19,
-    "macd": 2.078,
-    "signal": 1.6306,
-    "hist": 0.4475,
-    "avg_dollar_volume": 679901617.0,
-    "sma200": 236.49,
-    "vol_ratio": 0.98,
-    "adx": 17.2,
-    "conds": {
-     "cond_gc": true,
-     "cond_stoch": true,
-     "cond_volume": true,
-     "cond_trend": true,
-     "cond_vol_surge": true,
-     "cond_adx": true
-    }
-   },
-   "s2": {
-    "rs_3m": 0.9294,
-    "rs_6m": 0.7879,
-    "sma50": 216.77,
-    "sma200": 236.49,
-    "drawdown": -0.2208,
-    "pullback_low_pct": -0.0457,
-    "trigger": "breakout",
-    "vol_ratio": 0.98,
-    "conds": {
-     "cond_rs_dual": false,
-     "cond_structure": false,
-     "cond_drawdown": false,
-     "cond_pullback": true,
-     "cond_trigger": false,
-     "cond_rs_top": false
-    }
-   }
-  },
-  {
-   "ticker": "AMZN",
-   "name": "Amazon",
-   "sector": "Consumer Discretionary",
-   "sector_kr": "자유소비재",
-   "price": 241.7,
-   "pass_s1": true,
-   "pass_s2": false,
-   "s1": {
-    "gc_date": "2026-07-01",
-    "slow_k": 59.48,
-    "slow_d": 45.64,
-    "macd": -5.0608,
-    "signal": -5.5309,
-    "hist": 0.4701,
-    "avg_dollar_volume": 15172245962.0,
-    "sma200": 232.93,
-    "vol_ratio": 0.84,
-    "adx": 28.4,
-    "conds": {
-     "cond_gc": true,
-     "cond_stoch": true,
-     "cond_volume": true,
-     "cond_trend": true,
-     "cond_vol_surge": true,
-     "cond_adx": true
-    }
-   },
-   "s2": {
-    "rs_3m": 0.9227,
-    "rs_6m": 0.8896,
-    "sma50": 255.56,
-    "sma200": 232.93,
-    "drawdown": -0.1211,
-    "pullback_low_pct": -0.0828,
-    "trigger": "breakout",
-    "vol_ratio": 0.84,
-    "conds": {
-     "cond_rs_dual": false,
-     "cond_structure": false,
-     "cond_drawdown": true,
-     "cond_pullback": false,
-     "cond_trigger": false,
-     "cond_rs_top": false
-    }
-   }
-  },
-  {
-   "ticker": "APP",
-   "name": "AppLovin",
+   "ticker": "AAPL",
+   "name": "Apple Inc.",
    "sector": "Information Technology",
    "sector_kr": "IT/기술",
-   "price": 564.61,
+   "price": 308.63,
    "pass_s1": true,
    "pass_s2": false,
    "s1": {
-    "gc_date": "2026-07-01",
-    "slow_k": 77.89,
-    "slow_d": 57.64,
-    "macd": -1.2233,
-    "signal": -4.9511,
-    "hist": 3.7278,
-    "avg_dollar_volume": 2769482651.0,
-    "sma200": 540.24,
-    "vol_ratio": 1.08,
-    "adx": 18.4,
+    "gc_date": "2026-07-02",
+    "slow_k": 74.73,
+    "slow_d": 53.75,
+    "macd": -0.6719,
+    "signal": -0.9274,
+    "hist": 0.2554,
+    "avg_dollar_volume": 20221378867.0,
+    "sma200": 270.32,
+    "vol_ratio": 1.09,
+    "adx": 23.7,
     "conds": {
      "cond_gc": true,
      "cond_stoch": true,
@@ -171,90 +65,43 @@
     }
    },
    "s2": {
-    "rs_3m": 1.1279,
-    "rs_6m": 0.6901,
-    "sma50": 499.56,
-    "sma200": 540.24,
-    "drawdown": -0.2304,
-    "pullback_low_pct": -0.1932,
+    "rs_3m": 0.9898,
+    "rs_6m": 0.9819,
+    "sma50": 293.46,
+    "sma200": 270.32,
+    "drawdown": -0.0208,
+    "pullback_low_pct": -0.0948,
     "trigger": "breakout",
-    "vol_ratio": 1.08,
-    "conds": {
-     "cond_rs_dual": false,
-     "cond_structure": false,
-     "cond_drawdown": false,
-     "cond_pullback": false,
-     "cond_trigger": false,
-     "cond_rs_top": false
-    }
-   }
-  },
-  {
-   "ticker": "LIN",
-   "name": "Linde plc",
-   "sector": "Materials",
-   "sector_kr": "소재",
-   "price": 533.55,
-   "pass_s1": true,
-   "pass_s2": false,
-   "s1": {
-    "gc_date": "2026-07-01",
-    "slow_k": 56.85,
-    "slow_d": 56.08,
-    "macd": 4.4729,
-    "signal": 3.6452,
-    "hist": 0.8277,
-    "avg_dollar_volume": 1364751114.0,
-    "sma200": 466.55,
-    "vol_ratio": 1.17,
-    "adx": 13.7,
-    "conds": {
-     "cond_gc": true,
-     "cond_stoch": true,
-     "cond_volume": true,
-     "cond_trend": true,
-     "cond_vol_surge": true,
-     "cond_adx": true
-    }
-   },
-   "s2": {
-    "rs_3m": 0.8584,
-    "rs_6m": 1.0754,
-    "sma50": 507.86,
-    "sma200": 466.55,
-    "drawdown": 0.0,
-    "pullback_low_pct": -0.0407,
-    "trigger": "breakout",
-    "vol_ratio": 1.17,
+    "vol_ratio": 1.09,
     "conds": {
      "cond_rs_dual": false,
      "cond_structure": true,
      "cond_drawdown": true,
-     "cond_pullback": true,
+     "cond_pullback": false,
      "cond_trigger": false,
      "cond_rs_top": false
     }
    }
   },
   {
-   "ticker": "META",
-   "name": "Meta Platforms",
+   "ticker": "GOOG",
+   "name": "Alphabet Inc. (Class C)",
    "sector": "Information Technology",
    "sector_kr": "IT/기술",
-   "price": 612.91,
+   "price": 356.18,
    "pass_s1": true,
    "pass_s2": false,
    "s1": {
-    "gc_date": "2026-07-01",
-    "slow_k": 50.64,
-    "slow_d": 32.13,
-    "macd": -9.7691,
-    "signal": -12.9241,
-    "hist": 3.155,
-    "avg_dollar_volume": 11515170715.0,
-    "sma200": 646.3,
-    "vol_ratio": 2.3,
-    "adx": 18.6,
+    "gc_date": "2026-07-02",
+    "slow_k": 55.4,
+    "slow_d": 46.21,
+    "macd": -4.3604,
+    "signal": -4.5481,
+    "hist": 0.1877,
+    "avg_dollar_volume": 9111581988.0,
+    "sma200": 315.22,
+    "vol_ratio": 0.6,
+    "adx": 16.4,
     "conds": {
      "cond_gc": true,
      "cond_stoch": true,
@@ -265,20 +112,255 @@
     }
    },
    "s2": {
-    "rs_3m": 0.8525,
-    "rs_6m": 0.7962,
-    "sma50": 606.51,
-    "sma200": 646.3,
-    "drawdown": -0.2216,
-    "pullback_low_pct": -0.0903,
+    "rs_3m": 0.9899,
+    "rs_6m": 0.9833,
+    "sma50": 368.1,
+    "sma200": 315.22,
+    "drawdown": -0.1069,
+    "pullback_low_pct": -0.0957,
     "trigger": "breakout",
-    "vol_ratio": 2.3,
+    "vol_ratio": 0.6,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": true,
+     "cond_pullback": false,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "GOOGL",
+   "name": "Alphabet Inc. (Class A)",
+   "sector": "Information Technology",
+   "sector_kr": "IT/기술",
+   "price": 359.91,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-02",
+    "slow_k": 63.97,
+    "slow_d": 55.15,
+    "macd": -4.2908,
+    "signal": -4.7847,
+    "hist": 0.494,
+    "avg_dollar_volume": 13625963054.0,
+    "sma200": 315.81,
+    "vol_ratio": 0.68,
+    "adx": 17.3,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.9919,
+    "rs_6m": 0.9958,
+    "sma50": 370.83,
+    "sma200": 315.81,
+    "drawdown": -0.1055,
+    "pullback_low_pct": -0.1063,
+    "trigger": "breakout",
+    "vol_ratio": 0.68,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": true,
+     "cond_pullback": false,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "MSFT",
+   "name": "Microsoft",
+   "sector": "Information Technology",
+   "sector_kr": "IT/기술",
+   "price": 390.49,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-02",
+    "slow_k": 62.66,
+    "slow_d": 48.53,
+    "macd": -9.7953,
+    "signal": -10.8486,
+    "hist": 1.0532,
+    "avg_dollar_volume": 18688275901.0,
+    "sma200": 443.78,
+    "vol_ratio": 0.86,
+    "adx": 21.9,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.8678,
+    "rs_6m": 0.6978,
+    "sma50": 407.22,
+    "sma200": 443.78,
+    "drawdown": -0.2751,
+    "pullback_low_pct": -0.085,
+    "trigger": "breakout",
+    "vol_ratio": 0.86,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": false,
+     "cond_pullback": false,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "PAYX",
+   "name": "Paychex",
+   "sector": "Industrials",
+   "sector_kr": "산업재",
+   "price": 106.35,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-02",
+    "slow_k": 79.65,
+    "slow_d": 69.98,
+    "macd": 1.5177,
+    "signal": 1.1212,
+    "hist": 0.3965,
+    "avg_dollar_volume": 387422572.0,
+    "sma200": 103.24,
+    "vol_ratio": 0.94,
+    "adx": 17.4,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.9705,
+    "rs_6m": 0.8324,
+    "sma50": 95.8,
+    "sma200": 103.24,
+    "drawdown": -0.2575,
+    "pullback_low_pct": -0.059,
+    "trigger": "breakout",
+    "vol_ratio": 0.94,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": false,
+     "cond_pullback": true,
+     "cond_trigger": false,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "PLTR",
+   "name": "Palantir Technologies",
+   "sector": "Information Technology",
+   "sector_kr": "IT/기술",
+   "price": 129.3,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-02",
+    "slow_k": 58.96,
+    "slow_d": 43.68,
+    "macd": -4.8455,
+    "signal": -5.348,
+    "hist": 0.5025,
+    "avg_dollar_volume": 5430297383.0,
+    "sma200": 157.91,
+    "vol_ratio": 1.39,
+    "adx": 20.5,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.723,
+    "rs_6m": 0.62,
+    "sma50": 134.58,
+    "sma200": 157.91,
+    "drawdown": -0.3759,
+    "pullback_low_pct": -0.1907,
+    "trigger": "breakout",
+    "vol_ratio": 1.39,
     "conds": {
      "cond_rs_dual": false,
      "cond_structure": false,
      "cond_drawdown": false,
      "cond_pullback": false,
      "cond_trigger": true,
+     "cond_rs_top": false
+    }
+   }
+  },
+  {
+   "ticker": "WDAY",
+   "name": "Workday, Inc.",
+   "sector": "Information Technology",
+   "sector_kr": "IT/기술",
+   "price": 135.4,
+   "pass_s1": true,
+   "pass_s2": false,
+   "s1": {
+    "gc_date": "2026-07-02",
+    "slow_k": 68.42,
+    "slow_d": 52.48,
+    "macd": -1.444,
+    "signal": -2.2823,
+    "hist": 0.8382,
+    "avg_dollar_volume": 648011739.0,
+    "sma200": 174.84,
+    "vol_ratio": 0.84,
+    "adx": 14.9,
+    "conds": {
+     "cond_gc": true,
+     "cond_stoch": true,
+     "cond_volume": true,
+     "cond_trend": true,
+     "cond_vol_surge": true,
+     "cond_adx": true
+    }
+   },
+   "s2": {
+    "rs_3m": 0.8594,
+    "rs_6m": 0.5413,
+    "sma50": 127.78,
+    "sma200": 174.84,
+    "drawdown": -0.4533,
+    "pullback_low_pct": -0.0846,
+    "trigger": "breakout",
+    "vol_ratio": 0.84,
+    "conds": {
+     "cond_rs_dual": false,
+     "cond_structure": false,
+     "cond_drawdown": false,
+     "cond_pullback": false,
+     "cond_trigger": false,
      "cond_rs_top": false
     }
    }
