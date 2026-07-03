@@ -164,6 +164,22 @@ body {
 .chart-cap { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; font-size: 10.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .chart-cap b { font-weight: 800; }
 
+/* 봉차트: 양봉/음봉 + 5·10일선 + BB(20,2σ) */
+.spark.candle { height: 120px; }
+.spark line.cu, .spark rect.cu { stroke: var(--pos); fill: var(--pos); }
+.spark line.cd, .spark rect.cd { stroke: var(--neg); fill: var(--neg); }
+.spark line.cu, .spark line.cd { stroke-width: 1; }
+.spark .ma5 { stroke: #fbbf24; stroke-width: 1.2; }
+.spark .ma10 { stroke: #60a5fa; stroke-width: 1.2; }
+.spark .bb-line { stroke: #8b93a7; stroke-width: 0.8; opacity: 0.7; }
+.spark .bb-mid { stroke: #8b93a7; stroke-width: 0.8; stroke-dasharray: 3 3; opacity: 0.7; }
+.spark .bb-area { fill: #8b93a7; opacity: 0.08; }
+.legend { display: flex; align-items: center; gap: 4px; }
+.legend i { display: inline-block; width: 10px; height: 2px; border-radius: 1px; }
+.legend .lg-ma5 { background: #fbbf24; }
+.legend .lg-ma10 { background: #60a5fa; }
+.legend .lg-bb { background: #8b93a7; }
+
 .sector-group { margin-bottom: 20px; }
 .sector-head {
   display: flex; align-items: center; gap: 8px; margin: 6px 2px 10px; font-weight: 800; font-size: 14px;

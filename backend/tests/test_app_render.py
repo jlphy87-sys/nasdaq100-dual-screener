@@ -193,3 +193,33 @@ def test_render_chart_tampered_no_svg_no_crash():
     html = _content(c)
     assert "chart-wrap" not in html          # 차트만 조용히 생략
     assert m["items"][0]["ticker"] in html   # 카드는 정상 렌더
+
+
+def test_render_candle_chart_with_bands():
+    m = _mock("good")
+    m["items"][0]["chart"] = {
+        "closes": [100, 102, 101, 110],
+        "o": [99, 101, 102, 101], "h": [101, 103, 103, 111],
+        "l": [98, 100, 100, 100], "c": [100, 102, 101, 110],
+        "ma5": [None, 100.5, 101.0, 104.0], "ma10": [None, None, 100.8, 103.0],
+        "bb_mid": [None, 101.0, 101.5, 104.0],
+        "bb_up": [None, 103.0, 104.0, 112.0], "bb_lo": [None, 99.0, 99.5, 96.0],
+        "start": "2026-06-27", "end": "2026-07-02",
+    }
+    c = _mount(m)
+    html = _content(c)
+    assert "<rect" in html and 'class="cu"' in html      # 양봉 존재
+    assert "bb-area" in html and "BB(20,2σ)" in html     # 밴드 + 범례
+    assert "spark-line" not in html                      # 라인 폴백 아님
+
+
+def test_render_candle_tampered_falls_back_to_line():
+    m = _mock("good")
+    m["items"][0]["chart"] = {
+        "closes": [100.0, 104.0, 98.5, 110.2],
+        "o": [99, "악성", 102, 101], "h": [1, 2, 3, 4], "l": [1, 2, 3, 4], "c": [1, 2, 3, 4],
+        "start": "2026-04-01", "end": "2026-07-01",
+    }
+    c = _mount(m)
+    html = _content(c)
+    assert "spark-line" in html and "<rect" not in html  # 봉 버리고 라인 폴백

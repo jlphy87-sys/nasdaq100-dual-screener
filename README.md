@@ -129,7 +129,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | `s2.max_drawdown` | -0.15 | 52주 고점 대비 허용 하락 |
 | `s2.pullback.min/max` | 3%/8% | 눌림 인정 범위 (D15) |
 | `s2.trigger.mode` | breakout | `macd_gc`로 바꾸면 트리거 실험 가능 |
-| `chart.bars` | 63 | 카드 펼침 시 미니 차트에 실을 최근 봉 수 (~3개월, 0=차트 끔) |
+| `chart.bars` | 63 | 카드 펼침 시 봉차트(+5·10일선, BB 20·2σ)에 실을 최근 봉 수 (~3개월, 0=차트 끔) |
 | `debug_show_all` | false | true면 탈락 종목도 items에 포함(디버그) |
 
 ---

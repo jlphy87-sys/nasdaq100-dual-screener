@@ -34,23 +34,43 @@ def _config_summary(config: dict) -> dict:
     }
 
 
-def _chart_block(close, bars: int) -> dict | None:
-    """통과 종목 카드용 미니 차트 데이터 — 최근 bars 봉 종가 (계약 §7: 필드 추가만).
+def _chart_block(df, bars: int) -> dict | None:
+    """통과 종목 카드용 미니 차트 데이터 (계약 §7: 필드 추가만).
 
-    이유: 앱에서 카드 펼침 시 오프라인·의존성 0 으로 차트를 그리기 위해 서버가
-          시리즈를 실어 보낸다 (외부 차트 위젯 대신). 비용: results.json 이
-          통과 종목당 ~0.5KB 증가. 탈출구: config.chart.bars=0 이면 생략.
+    봉차트용 OHLC + 5·10일 이평 + 볼린저밴드(20, ±2σ; 중심선=20일선) 시리즈를
+    서버가 계산해 싣는다 — 앱은 그리기만(의존성 0·오프라인 동작).
+    지표는 전체 히스토리로 계산 후 표시 구간만 잘라 워밍업 구간에도 값이 있다.
+    closes 는 구버전 앱(라인차트) 호환용으로 유지.
+    비용: 통과 종목당 ~4KB. 탈출구: config.chart.bars=0 이면 생략.
     """
-    if bars <= 0 or close is None:
+    if bars <= 0 or df is None:
         return None
     try:
-        c = close.dropna().tail(bars)
-        if len(c) < 2:
+        cols = ["Open", "High", "Low", "Close"]
+        if any(k not in getattr(df, "columns", []) for k in cols):
             return None
+        sub = df[cols].dropna()
+        if len(sub) < 2:
+            return None
+        close = sub["Close"]
+        ma5 = close.rolling(5).mean()
+        ma10 = close.rolling(10).mean()
+        ma20 = close.rolling(20).mean()
+        sd20 = close.rolling(20).std(ddof=0)  # BB 표준: 모표준편차
+
+        idx = sub.index[-bars:]
+
+        def arr(s):
+            return [round(float(v), 2) if pd.notna(v) else None for v in s.loc[idx]]
+
+        c_arr = arr(close)
         return {
-            "closes": [round(float(v), 2) for v in c],
-            "start": pd.Timestamp(c.index[0]).strftime("%Y-%m-%d"),
-            "end": pd.Timestamp(c.index[-1]).strftime("%Y-%m-%d"),
+            "closes": c_arr,  # 구버전 라인차트 폴백용 (의미 유지)
+            "o": arr(sub["Open"]), "h": arr(sub["High"]), "l": arr(sub["Low"]), "c": c_arr,
+            "ma5": arr(ma5), "ma10": arr(ma10),
+            "bb_mid": arr(ma20), "bb_up": arr(ma20 + 2 * sd20), "bb_lo": arr(ma20 - 2 * sd20),
+            "start": pd.Timestamp(idx[0]).strftime("%Y-%m-%d"),
+            "end": pd.Timestamp(idx[-1]).strftime("%Y-%m-%d"),
         }
     except Exception:  # noqa: BLE001 — 차트는 부가 정보: 실패해도 카드는 산다
         return None
@@ -112,7 +132,7 @@ def build(
     errors: list[dict] = []
     s1_evals: dict[str, dict] = {}
     s2_evals: dict[str, dict] = {}
-    close_map: dict[str, pd.Series] = {}  # 카드 차트용 종가 시리즈 보관
+    chart_src: dict[str, pd.DataFrame] = {}  # 카드 차트용 OHLC 프레임 보관
     last_bar_dates: list[str] = []
 
     for ticker in tickers:
@@ -132,8 +152,8 @@ def build(
             if e2:
                 s2_evals[ticker] = e2
                 last_bar_dates.append(e2["last_bar_date"])
-            if (e1 or e2) and "Close" in df.columns:
-                close_map[ticker] = df["Close"]
+            if e1 or e2:
+                chart_src[ticker] = df
         except Exception as e:  # noqa: BLE001 — 한 종목이 전체를 죽이지 않는다
             errors.append({"ticker": ticker, "reason": f"{type(e).__name__}: {e}"})
 
@@ -161,7 +181,7 @@ def build(
             "pass_s1": pass_s1,
             "pass_s2": pass_s2,
         }
-        chart = _chart_block(close_map.get(ticker), chart_bars)
+        chart = _chart_block(chart_src.get(ticker), chart_bars)
         if chart:
             item["chart"] = chart
         if e1:

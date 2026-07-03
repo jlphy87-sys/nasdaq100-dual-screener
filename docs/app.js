@@ -273,9 +273,13 @@
       '<span class="badges">' + badge + '</span><span class="chev">▼</span></div>' +
       row2 + detail + "</article>";
   }
-  // 종가 시리즈 → 인라인 SVG 라인차트 (라이브러리 0, 오프라인 동작).
-  // 데이터는 sanitizeChart 를 통과한 것만 온다 (양수 숫자 2~260개 보장).
+  // 차트 (라이브러리 0, 오프라인 동작). 데이터는 sanitizeChart 통과분만 온다.
+  // candle = 봉 + 5·10일선 + BB(20,±2σ). line = 구버전 종가 라인 폴백.
   function chartHtml(ch) {
+    return ch.mode === "candle" ? candleHtml(ch) : lineHtml(ch);
+  }
+
+  function lineHtml(ch) {
     var c = ch.closes, n = c.length;
     var W = 320, H = 84, TOP = 6, BOT = 6;
     var min = Math.min.apply(null, c), max = Math.max.apply(null, c);
@@ -297,6 +301,83 @@
       '<div class="chart-cap"><span>' + esc(ch.start || "") + " ~ " + esc(ch.end || "") + " · " + n + '봉</span>' +
       '<span>저 ' + fmtNum(min, 2) + " · 고 " + fmtNum(max, 2) +
       ' · <b class="' + cls + '">' + (chg >= 0 ? "+" : "") + fmtPct(chg) + "</b></span></div></div>";
+  }
+
+  function candleHtml(ch) {
+    var n = ch.c.length, W = 320, H = 120, TOP = 5, BOT = 5;
+    // 스케일: 봉 고저 + 유효한 밴드/이평값까지 포함해 잘림 방지
+    var min = Infinity, max = -Infinity, i, v;
+    for (i = 0; i < n; i++) {
+      if (ch.l[i] < min) min = ch.l[i];
+      if (ch.h[i] > max) max = ch.h[i];
+    }
+    var pmin = min, pmax = max;  // 캡션용 실제 가격 저·고 (밴드 확장 전)
+    var overlays = [ch.ma5, ch.ma10, ch.bb_mid, ch.bb_up, ch.bb_lo];
+    for (var oi = 0; oi < overlays.length; oi++) {
+      var a = overlays[oi];
+      if (!a) continue;
+      for (i = 0; i < n; i++) {
+        v = a[i];
+        if (v == null) continue;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+    }
+    var span = (max - min) || 1;
+    function Y(val) { return (TOP + (1 - (val - min) / span) * (H - TOP - BOT)).toFixed(1); }
+    var xw = W / n, half = Math.max(0.8, xw * 0.32);
+
+    // 지표 폴리라인: null(워밍업)은 건너뛰고 이어진 구간별로 그린다
+    function poly(arr, cls) {
+      if (!arr) return "";
+      var segs = [], cur = [];
+      for (var j = 0; j < n; j++) {
+        if (arr[j] == null) { if (cur.length > 1) segs.push(cur); cur = []; continue; }
+        cur.push(((j + 0.5) * xw).toFixed(1) + "," + Y(arr[j]));
+      }
+      if (cur.length > 1) segs.push(cur);
+      var out = "";
+      for (var s = 0; s < segs.length; s++) {
+        out += '<polyline class="' + cls + '" fill="none" points="' + segs[s].join(" ") + '"/>';
+      }
+      return out;
+    }
+
+    // BB 영역: 상단·하단이 모두 있는 구간을 채움
+    var band = "";
+    if (ch.bb_up && ch.bb_lo) {
+      var fwd = [], bwd = [];
+      for (i = 0; i < n; i++) {
+        if (ch.bb_up[i] == null || ch.bb_lo[i] == null) continue;
+        var x = ((i + 0.5) * xw).toFixed(1);
+        fwd.push(x + "," + Y(ch.bb_up[i]));
+        bwd.unshift(x + "," + Y(ch.bb_lo[i]));
+      }
+      if (fwd.length > 1) band = '<polygon class="bb-area" points="' + fwd.join(" ") + " " + bwd.join(" ") + '"/>';
+    }
+
+    var candles = "";
+    for (i = 0; i < n; i++) {
+      var cx = ((i + 0.5) * xw).toFixed(1);
+      var cls = ch.c[i] >= ch.o[i] ? "cu" : "cd";
+      var yO = Y(ch.o[i]), yC = Y(ch.c[i]);
+      var top = Math.min(yO, yC), hgt = Math.max(0.8, Math.abs(yO - yC));
+      candles += '<line class="' + cls + '" x1="' + cx + '" y1="' + Y(ch.h[i]) + '" x2="' + cx + '" y2="' + Y(ch.l[i]) + '"/>' +
+        '<rect class="' + cls + '" x="' + (((i + 0.5) * xw) - half).toFixed(1) + '" y="' + top +
+        '" width="' + (half * 2).toFixed(1) + '" height="' + hgt.toFixed(1) + '"/>';
+    }
+
+    var chg = ch.c[n - 1] / ch.c[0] - 1;
+    var cc = chg >= 0 ? "pos" : "neg";
+    return '<div class="chart-wrap">' +
+      '<svg class="spark candle" viewBox="0 0 ' + W + " " + H + '" aria-hidden="true">' +
+      band + poly(ch.bb_up, "bb-line") + poly(ch.bb_lo, "bb-line") + poly(ch.bb_mid, "bb-mid") +
+      candles + poly(ch.ma5, "ma5") + poly(ch.ma10, "ma10") + "</svg>" +
+      '<div class="chart-cap"><span class="legend">' +
+      '<i class="lg-ma5"></i>5일 <i class="lg-ma10"></i>10일 <i class="lg-bb"></i>BB(20,2σ)</span>' +
+      '<span>저 ' + fmtNum(pmin, 2) + " · 고 " + fmtNum(pmax, 2) + "</span></div>" +
+      '<div class="chart-cap"><span>' + esc(ch.start || "") + " ~ " + esc(ch.end || "") + " · " + n + '봉</span>' +
+      '<span>기간 <b class="' + cc + '">' + (chg >= 0 ? "+" : "") + fmtPct(chg) + "</b></span></div></div>";
   }
 
   function kv(k, v) { return '<span class="kv"><span class="k">' + k + '</span><br><span class="v">' + v + "</span></span>"; }

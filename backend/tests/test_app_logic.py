@@ -162,3 +162,37 @@ def test_sanitize_chart_tampered_dropped_card_survives():
         it0 = next(i for i in out["items"] if i["ticker"] == tk)
         assert it0["chart"] is None            # 차트만 버림
         assert it0["ticker"] == tk             # 카드는 산다
+
+
+def test_sanitize_chart_candle_mode_and_overlay_isolation():
+    c = _ctx()
+    good = _mock("good")
+    tk = good["items"][0]["ticker"]
+    base = {
+        "closes": [100, 102, 101, 103],
+        "o": [99, 101, 102, 101], "h": [101, 103, 103, 104],
+        "l": [98, 100, 100, 100], "c": [100, 102, 101, 103],
+        "ma5": [None, None, 101.0, 102.0], "ma10": [None, None, None, 101.5],
+        "bb_mid": [None, 101.0, 101.5, 102.0],
+        "bb_up": [None, 103.0, 104.0, 105.0], "bb_lo": [None, 99.0, 99.5, 99.0],
+        "start": "2026-06-27", "end": "2026-07-02",
+    }
+    good["items"][0]["chart"] = base
+    out = _sanitize(c, good)
+    ch = next(i for i in out["items"] if i["ticker"] == tk)["chart"]
+    assert ch["mode"] == "candle"
+    assert ch["h"] == [101, 103, 103, 104] and ch["ma5"][2] == 101.0
+
+    # 오버레이만 오염 → 봉차트는 살고 해당 오버레이만 null
+    bad = json.loads(json.dumps(base))
+    bad["ma5"] = [1, "악성", 3, 4]
+    good["items"][0]["chart"] = bad
+    ch2 = next(i for i in _sanitize(c, good)["items"] if i["ticker"] == tk)["chart"]
+    assert ch2["mode"] == "candle" and ch2["ma5"] is None and ch2["ma10"] is not None
+
+    # 봉 데이터 오염(길이 불일치) → closes 라인 폴백
+    bad2 = json.loads(json.dumps(base))
+    bad2["h"] = [101, 103]
+    good["items"][0]["chart"] = bad2
+    ch3 = next(i for i in _sanitize(c, good)["items"] if i["ticker"] == tk)["chart"]
+    assert ch3["mode"] == "line" and ch3["closes"] == [100, 102, 101, 103]

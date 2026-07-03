@@ -62,19 +62,55 @@ var AppLogic = (function () {
     };
   }
 
-  // 차트는 부가 정보: 값이 하나라도 오염(비수치/0 이하)이면 차트만 버리고 카드는 산다.
+  // 차트는 부가 정보: 오염되면 차트(또는 해당 오버레이)만 버리고 카드는 산다.
   // 길이 상한 260 — 변조로 거대 배열이 와도 렌더 비용을 제한.
-  function sanitizeChart(raw) {
-    if (!raw || typeof raw !== "object" || !Array.isArray(raw.closes)) return null;
-    if (raw.closes.length > 260) return null;
-    var closes = [];
-    for (var i = 0; i < raw.closes.length; i++) {
-      var v = num(raw.closes[i]);
+  function priceArr(raw, n) {          // 가격 배열: 길이 일치 + 전부 양수
+    if (!Array.isArray(raw) || raw.length !== n) return null;
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var v = num(raw[i]);
       if (v == null || v <= 0) return null;
-      closes.push(v);
+      out.push(v);
+    }
+    return out;
+  }
+  function lineArr(raw, n) {           // 지표 배열: null(워밍업) 허용, 숫자면 유한값만
+    if (!Array.isArray(raw) || raw.length !== n) return null;
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      if (raw[i] == null) { out.push(null); continue; }
+      var v = num(raw[i]);
+      if (v == null) return null;
+      out.push(v);
+    }
+    return out;
+  }
+  function sanitizeChart(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var start = str(raw.start), end = str(raw.end);
+    // 봉차트: o/h/l/c 4배열이 모두 유효할 때만. 오버레이는 각자 유효할 때만 살린다.
+    if (Array.isArray(raw.c) && raw.c.length >= 2 && raw.c.length <= 260) {
+      var n = raw.c.length;
+      var o = priceArr(raw.o, n), h = priceArr(raw.h, n), l = priceArr(raw.l, n), c = priceArr(raw.c, n);
+      if (o && h && l && c) {
+        return {
+          mode: "candle", o: o, h: h, l: l, c: c,
+          ma5: lineArr(raw.ma5, n), ma10: lineArr(raw.ma10, n),
+          bb_mid: lineArr(raw.bb_mid, n), bb_up: lineArr(raw.bb_up, n), bb_lo: lineArr(raw.bb_lo, n),
+          start: start, end: end
+        };
+      }
+    }
+    // 폴백: 종가 라인 (구버전 results.json / 봉 데이터 오염 시)
+    if (!Array.isArray(raw.closes) || raw.closes.length > 260) return null;
+    var closes = [];
+    for (var i2 = 0; i2 < raw.closes.length; i2++) {
+      var v2 = num(raw.closes[i2]);
+      if (v2 == null || v2 <= 0) return null;
+      closes.push(v2);
     }
     if (closes.length < 2) return null;
-    return { closes: closes, start: str(raw.start), end: str(raw.end) };
+    return { mode: "line", closes: closes, start: start, end: end };
   }
 
   function sanitizeItem(raw) {

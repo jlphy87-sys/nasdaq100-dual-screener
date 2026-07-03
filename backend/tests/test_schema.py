@@ -149,3 +149,19 @@ def test_chart_disabled_by_knob():
     r = _build(frames, config=config)
     it = next(i for i in r["items"] if i["ticker"] == "AAA")
     assert "chart" not in it
+
+
+def test_chart_ohlc_and_bands_consistent():
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
+    r = _build(frames)
+    ch = next(i for i in r["items"] if i["ticker"] == "AAA")["chart"]
+    n = len(ch["c"])
+    for k in ["o", "h", "l", "c", "closes", "ma5", "ma10", "bb_mid", "bb_up", "bb_lo"]:
+        assert len(ch[k]) == n, k
+    assert ch["closes"] == ch["c"]  # 구버전 폴백 필드 = 종가
+    for i in range(n):
+        assert ch["l"][i] <= ch["h"][i]                       # 봉 무결성
+        assert ch["l"][i] <= ch["o"][i] <= ch["h"][i]
+        assert ch["l"][i] <= ch["c"][i] <= ch["h"][i]
+        if ch["bb_up"][i] is not None:
+            assert ch["bb_lo"][i] <= ch["bb_mid"][i] <= ch["bb_up"][i]  # 밴드 순서
