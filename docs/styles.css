@@ -65,7 +65,8 @@ body {
   box-shadow: var(--shadow);
   transition: transform 0.12s ease;
 }
-.icon-btn:active { transform: scale(0.92) rotate(90deg); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn:active .glyph { transform: rotate(90deg); }
 
 .banner { margin-top: 10px; padding: 10px 13px; border-radius: 12px; font-size: 13px; font-weight: 600; }
 .banner-warn { background: var(--warn-bg); color: var(--warn-fg); }
@@ -218,7 +219,9 @@ body {
 .ptr.spin .ptr-spin { animation: rot 0.8s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
 
-/* ⟳ 버튼 새로고침 중: 버튼 자체가 회전 (레이아웃 밀림 없음), 연타 차단 */
-.icon-btn.spinning { animation: rot 0.8s linear infinite; opacity: 0.65; pointer-events: none; }
+/* ⟳ 버튼 새로고침 중: 화살표 글리프만 회전 (버튼 박스는 고정), 연타 차단 */
+.icon-btn .glyph { display: inline-block; }
+.icon-btn.spinning { opacity: 0.65; pointer-events: none; }
+.icon-btn.spinning .glyph { animation: rot 0.8s linear infinite; }
 
 .hidden { display: none !important; }

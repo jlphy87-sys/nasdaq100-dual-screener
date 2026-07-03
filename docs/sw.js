@@ -7,7 +7,7 @@
  *   탈출구: 아래 fetch 핸들러를 v2 의 cached || network 형태로 되돌리면 됨.
  * 버전 올리면 옛 캐시 정리.
  */
-var VERSION = "v4"; /* ⟳ 새로고침 UX 개선 — 완료 연동 스피너·피드백 토스트 (2026-07-03) */
+var VERSION = "v5"; /* ⟳ 회전을 버튼 박스가 아닌 화살표 글리프만으로 (2026-07-03) */
 var SHELL_CACHE = "shell-" + VERSION;
 var DATA_CACHE = "data-" + VERSION;
 
