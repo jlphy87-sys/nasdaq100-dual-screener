@@ -147,7 +147,20 @@ var AppLogic = (function () {
       var bp = num(e.buy_price), slp = num(e.sell_price);
       bp = (bp != null && bp > 0) ? bp : null;
       slp = (bp != null && slp != null && slp > 0) ? slp : null;
+      // D20c 매매 이력: 완결 사이클(매수·매도 모두 유효)만, 종목당 상한 50
+      var trades = [];
+      if (Array.isArray(e.trades)) {
+        for (var t = 0; t < e.trades.length && trades.length < 50; t++) {
+          var tr = e.trades[t];
+          if (!tr || typeof tr !== "object") continue;
+          var tb = num(tr.buy_price), ts = num(tr.sell_price);
+          if (tb == null || tb <= 0 || ts == null || ts <= 0) continue;
+          trades.push({ buy_price: tb, buy_at: str(tr.buy_at),
+                        sell_price: ts, sell_at: str(tr.sell_at) });
+        }
+      }
       out.push({
+        trades: trades,
         ticker: tk,
         name: str(e.name) || tk,
         sector_kr: str(e.sector_kr) || "미분류",
@@ -188,6 +201,34 @@ var AppLogic = (function () {
     var sp = entry ? num(entry.saved_price) : null, cp = num(curPrice);
     if (sp == null || sp <= 0 || cp == null || cp <= 0) return null;
     return cp / sp - 1;
+  }
+
+  // D20c: 매매 기록 표용 행 목록 — 이력(trades[]) + 현재 사이클을 합쳐
+  // 날짜 내림차순. i 는 삭제용 식별자 (이력 인덱스, 현재 사이클은 -1).
+  function tradeRows(entries, prices) {
+    var rows = [];
+    for (var k = 0; k < entries.length; k++) {
+      var e = entries[k];
+      var hist = e.trades || [];
+      for (var t = 0; t < hist.length; t++) {
+        rows.push({ ticker: e.ticker, i: t, closed: true,
+          buy_price: hist[t].buy_price, buy_at: hist[t].buy_at,
+          sell_price: hist[t].sell_price, sell_at: hist[t].sell_at,
+          ret: hist[t].sell_price / hist[t].buy_price - 1 });
+      }
+      if (e.buy_price != null) {
+        var cur = tradeReturn(e, prices ? prices[e.ticker] : null);
+        rows.push({ ticker: e.ticker, i: -1, closed: cur.closed,
+          buy_price: e.buy_price, buy_at: e.buy_at,
+          sell_price: e.sell_price, sell_at: e.sell_at, ret: cur.ret });
+      }
+    }
+    rows.sort(function (a, b) {
+      var da = a.sell_at || a.buy_at || "", db = b.sell_at || b.buy_at || "";
+      if (da !== db) return da < db ? 1 : -1;   // 최근 활동이 위로
+      return a.ticker < b.ticker ? -1 : 1;
+    });
+    return rows;
   }
 
   // prices: {ticker: 현재가|null}. key: saved_at(기본, 최신순) | ret | name
@@ -352,6 +393,7 @@ var AppLogic = (function () {
     watchReturn: watchReturn,
     tradeReturn: tradeReturn,
     parsePrice: parsePrice,
+    tradeRows: tradeRows,
     sortWatch: sortWatch,
     itemsForTab: itemsForTab,
     filterSort: filterSort,

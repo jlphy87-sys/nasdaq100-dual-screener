@@ -185,8 +185,14 @@
     var en = findWatch(ti.ticker);
     if (!en) { state.tradeInput = null; renderContent(); return; }
     if (ti.kind === "buy") {
+      // D20c: 완결 사이클은 이력으로 보존 후 새 사이클 시작 (덮어쓰기 금지)
+      if (en.buy_price != null && en.sell_price != null) {
+        en.trades = en.trades || [];
+        en.trades.push({ buy_price: en.buy_price, buy_at: en.buy_at,
+                         sell_price: en.sell_price, sell_at: en.sell_at });
+      }
       en.buy_price = p; en.buy_at = todayStr();
-      en.sell_price = null; en.sell_at = null;   // 새 사이클 시작
+      en.sell_price = null; en.sell_at = null;
       showToast("매수 표시 $" + p.toLocaleString() + " 기록됨");
     } else {
       if (en.buy_price == null) { state.tradeInput = null; renderContent(); return; }
@@ -201,6 +207,18 @@
 
   function cancelTradeInput() {
     state.tradeInput = null;
+    renderContent();
+  }
+
+  // D20c: 매매 기록 삭제 — i>=0 은 이력(trades) 행, -1 은 현재 사이클.
+  // 관심종목 저장 자체는 유지된다 (그건 ★/[삭제] 담당).
+  function deleteTrade(tk, i) {
+    var en = findWatch(tk);
+    if (!en) return;
+    if (i >= 0 && en.trades && i < en.trades.length) en.trades.splice(i, 1);
+    else { en.buy_price = null; en.buy_at = null; en.sell_price = null; en.sell_at = null; }
+    persistWatch();
+    showToast("매매 기록 삭제됨");
     renderContent();
   }
 
@@ -442,7 +460,7 @@
         : (quotes[tk] ? quotes[tk].price : null);
     }
     var entries = AppLogic.sortWatch(state.watch, prices, state.sort.watch);
-    var out = "";
+    var out = tradeLogHtml(prices);   // D20c: 매매 기록 표 (기록 있을 때만)
     for (var k = 0; k < entries.length; k++) {
       var en = entries[k];
       // 오늘 스크리닝에 있으면 정식 카드(차트 포함) + 관심 행, 없으면 시세 추적 카드
@@ -497,17 +515,60 @@
     var retHtml = tr.ret == null ? "시세 없음"
       : '<b class="' + (tr.ret >= 0 ? "pos" : "neg") + '">' +
         (tr.ret >= 0 ? "+" : "") + fmtPct(tr.ret) + "</b>";
+    var clear = '<button class="trade-clear" data-tk="' + esc(en.ticker) +
+      '" aria-label="매매 기록 삭제">✕</button>';
     if (tr.closed) {
       return '<div class="trade-row"><span><i class="mark buy">매수</i>$' +
         en.buy_price.toLocaleString() + ' <i class="mark sell">매도</i>$' +
         en.sell_price.toLocaleString() + " · " + esc(en.sell_at || "") + "</span>" +
         "<span>확정 " + retHtml +
-        ' <button class="trade-buy" data-tk="' + esc(en.ticker) + '">다시 매수</button></span></div>';
+        ' <button class="trade-buy" data-tk="' + esc(en.ticker) + '">다시 매수</button>' +
+        clear + "</span></div>";
     }
     return '<div class="trade-row"><span><i class="mark buy">매수</i>$' +
       en.buy_price.toLocaleString() + " · " + esc(en.buy_at || "") + "</span>" +
       "<span>평가 " + retHtml +
-      ' <button class="trade-sell" data-tk="' + esc(en.ticker) + '">매도 표시</button></span></div>';
+      ' <button class="trade-sell" data-tk="' + esc(en.ticker) + '">매도 표시</button>' +
+      clear + "</span></div>";
+  }
+
+  // D20c: 매매 기록 표 — 관심 탭 상단, 이력 + 현재 사이클 한눈에
+  function tradeLogHtml(prices) {
+    var rows = AppLogic.tradeRows(state.watch, prices);
+    if (!rows.length) return "";
+    var body = "";
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      body += '<tr><td class="tk2">' + esc(r.ticker) + "</td>" +
+        "<td>$" + r.buy_price.toLocaleString() +
+        '<span class="d">' + esc(r.buy_at || "") + "</span></td>" +
+        "<td>" + (r.sell_price != null
+          ? "$" + r.sell_price.toLocaleString() + '<span class="d">' + esc(r.sell_at || "") + "</span>"
+          : '<span class="hold">보유중</span>') + "</td>" +
+        "<td>" + (r.ret == null ? "—"
+          : '<b class="' + (r.ret >= 0 ? "pos" : "neg") + '">' +
+            (r.ret >= 0 ? "+" : "") + fmtPct(r.ret) + "</b>") +
+        (r.closed ? "" : '<span class="d">평가</span>') + "</td>" +
+        '<td><button class="tl-del" data-tk="' + esc(r.ticker) + '" data-i="' + r.i +
+        '" aria-label="기록 삭제">✕</button></td></tr>';
+    }
+    var sum = "";
+    var closed = [], wins = 0, acc = 0;
+    for (var j = 0; j < rows.length; j++) {
+      if (rows[j].closed && rows[j].ret != null) {
+        closed.push(rows[j].ret); acc += rows[j].ret;
+        if (rows[j].ret >= 0) wins++;
+      }
+    }
+    if (closed.length) {
+      var avg = acc / closed.length;
+      sum = '<div class="tl-sum">확정 ' + closed.length + "건 · 승 " + wins +
+        " · 평균 " + (avg >= 0 ? "+" : "") + fmtPct(avg) + "</div>";
+    }
+    return '<section class="trade-log"><div class="tl-head">매매 기록 <span>' +
+      rows.length + '건</span></div><table class="tl"><thead><tr>' +
+      "<th>종목</th><th>매수</th><th>매도</th><th>손익</th><th></th>" +
+      "</tr></thead><tbody>" + body + "</tbody></table>" + sum + "</section>";
   }
   // 차트 (라이브러리 0, 오프라인 동작). 데이터는 sanitizeChart 통과분만 온다.
   // candle = 봉 + 5·10일선 + BB(20,±2σ). line = 구버전 종가 라인 폴백.
@@ -707,6 +768,13 @@
       if (del) { removeWatch(del.getAttribute("data-tk")); return; }
       if (e.target.closest(".trade-ok")) { confirmTradeInput(); return; }
       if (e.target.closest(".trade-cancel")) { cancelTradeInput(); return; }
+      var tld = e.target.closest(".tl-del");
+      if (tld) {
+        deleteTrade(tld.getAttribute("data-tk"), parseInt(tld.getAttribute("data-i"), 10));
+        return;
+      }
+      var clr = e.target.closest(".trade-clear");
+      if (clr) { deleteTrade(clr.getAttribute("data-tk"), -1); return; }
       var buy = e.target.closest(".trade-buy");
       if (buy) { openTradeInput(buy.getAttribute("data-tk"), "buy"); return; }
       var sell = e.target.closest(".trade-sell");

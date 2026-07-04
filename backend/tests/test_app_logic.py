@@ -230,6 +230,47 @@ def test_trade_return_states():
     assert closed["closed"] is True and abs(closed["ret"] - (-0.10)) < 1e-9
 
 
+# ---- 매매 이력·기록 표 (D20c — 정상/불완전/변조/상한) ---------------------------
+def test_sanitize_watch_trades_history():
+    c = _ctx()
+
+    def run(raw):
+        return json.loads(c.eval("JSON.stringify(AppLogic.sanitizeWatch(%s))" % json.dumps(raw)))
+
+    ok = run([{"ticker": "A", "trades": [
+        {"buy_price": 100.0, "buy_at": "2026-06-01", "sell_price": 110.0, "sell_at": "2026-06-10"},
+        {"buy_price": 100.0},                       # 불완전(매도 없음) → 제외
+        {"buy_price": "악성", "sell_price": 110.0},  # 변조 → 제외
+        "쓰레기", None]}])[0]
+    assert len(ok["trades"]) == 1
+    assert ok["trades"][0] == {"buy_price": 100.0, "buy_at": "2026-06-01",
+                               "sell_price": 110.0, "sell_at": "2026-06-10"}
+    assert run([{"ticker": "B"}])[0]["trades"] == []             # 누락 → 빈 배열
+    many = [{"buy_price": 1.0, "sell_price": 2.0}] * 60
+    assert len(run([{"ticker": "C", "trades": many}])[0]["trades"]) == 50  # 상한
+
+
+def test_trade_rows_merge_history_and_current():
+    c = _ctx()
+    entries = [
+        {"ticker": "A", "saved_price": 1,
+         "trades": [{"buy_price": 100.0, "buy_at": "2026-06-01",
+                     "sell_price": 90.0, "sell_at": "2026-06-10"}],
+         "buy_price": 80.0, "buy_at": "2026-07-01"},            # 보유중
+        {"ticker": "B", "saved_price": 1, "buy_price": 200.0, "buy_at": "2026-06-15",
+         "sell_price": 220.0, "sell_at": "2026-06-20"},          # 확정(현재 사이클)
+    ]
+    c.eval("var EN = AppLogic.sanitizeWatch(%s); var PR={A:88.0,B:999.0};" % json.dumps(entries))
+    rows = json.loads(c.eval("JSON.stringify(AppLogic.tradeRows(EN, PR))"))
+    assert len(rows) == 3
+    assert [r["ticker"] for r in rows] == ["A", "B", "A"]        # 최근 활동순
+    open_a = rows[0]
+    assert open_a["i"] == -1 and open_a["closed"] is False
+    assert abs(open_a["ret"] - 0.10) < 1e-9                      # 88/80 평가
+    assert rows[1]["closed"] is True and abs(rows[1]["ret"] - 0.10) < 1e-9  # 220/200
+    assert rows[2]["i"] == 0 and abs(rows[2]["ret"] - (-0.10)) < 1e-9       # 90/100
+
+
 # ---- chart 필드 (경계 4종: 정상/누락/변조/과대) --------------------------------
 def test_sanitize_chart_normal_and_missing():
     c = _ctx()

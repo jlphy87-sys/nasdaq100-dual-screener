@@ -311,6 +311,69 @@ def test_trade_input_invalid_rejected_and_cancel():
     assert "trade-form" not in html and "매수 표시" in html
 
 
+def _click_el(c, selector, attrs):
+    """content 위임 클릭 (속성 여러 개): selector 에 걸리는 가짜 target 으로 호출."""
+    c.eval("""
+      (function(){
+        var __attrs = %s;
+        document.getElementById('content')._handlers.click({target:{closest:function(sel){
+          if(sel==='%s') return {getAttribute:function(n){
+            return (n in __attrs) ? String(__attrs[n]) : null; }};
+          return null;
+        }}});
+      })();
+    """ % (json.dumps(attrs), selector))
+
+
+def test_trade_log_table_and_history_archive():
+    # D20c: 다시 매수 시 완결 사이클이 이력으로 보존되고 표에 함께 보인다
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.0}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:50.0,"
+           " buy_price:100.0, buy_at:'2026-06-21',"
+           " sell_price:110.0, sell_at:'2026-07-01'}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "매매 기록" in html and "1건" in html          # 표 노출
+    assert "확정 1건 · 승 1 · 평균 +10.0%" in html        # 요약
+    _click_content(c, ".trade-buy", "ZZZZ")               # 다시 매수 (새 사이클)
+    c.eval("document.getElementById('tp-ZZZZ').value = '50'")
+    _click_content(c, ".trade-ok", "ZZZZ")
+    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert len(saved["trades"]) == 1                      # 옛 사이클 보존
+    assert saved["trades"][0]["buy_price"] == 100.0 and saved["trades"][0]["sell_price"] == 110.0
+    assert saved["buy_price"] == 50.0 and saved["sell_price"] is None
+    html2 = _content(c)
+    assert "2건" in html2 and "보유중" in html2           # 이력 + 보유중 함께 표시
+
+
+def test_trade_delete_buttons_current_and_history():
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.0}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:50.0,"
+           " trades:[{buy_price:100.0, buy_at:'2026-06-01',"
+           " sell_price:90.0, sell_at:'2026-06-10'}],"
+           " buy_price:50.0, buy_at:'2026-07-02'}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "tl-del" in html and "trade-clear" in html     # 삭제 버튼 노출
+    _click_el(c, ".tl-del", {"data-tk": "ZZZZ", "data-i": -1})   # 현재 사이클 삭제
+    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved["buy_price"] is None and len(saved["trades"]) == 1  # 이력은 유지
+    _click_el(c, ".tl-del", {"data-tk": "ZZZZ", "data-i": 0})    # 이력 행 삭제
+    saved2 = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved2["trades"] == []
+    html2 = _content(c)
+    assert "매매 기록" not in html2                       # 기록 없음 → 표 숨김
+    assert "ZZZZ" in html2 and "매수 표시" in html2       # 관심종목 저장은 유지
+
+
 def test_chart_trade_marker_lines_render():
     # 매수/매도 가격선이 봉차트 위에 표시된다 (어느 탭이든 관심 저장분 기준)
     m = _mock("good")
