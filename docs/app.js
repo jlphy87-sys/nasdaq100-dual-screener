@@ -141,6 +141,52 @@
     renderTabs(); renderContent();
   }
 
+  // ---- 가상 매매 표식 (D20: 매수/매도 마킹 + 손익) ----------------------------
+  // 가격은 그날 서버 시세(일봉 종가)로 자동 기록 — 일봉 기반이라 장중 체결가
+  // 개념이 없고, WebView 는 prompt() 미지원이라 입력폼 없이 단순하게 간다.
+  // 한계: 사이클 1개만 보관(다시 매수 시 이전 기록 덮어씀). 탈출구: 이력이
+  // 필요해지면 entry.trades[] 배열로 확장 (스키마 추가만이라 호환).
+  function findWatch(tk) {
+    for (var i = 0; i < state.watch.length; i++) {
+      if (state.watch[i].ticker === tk) return state.watch[i];
+    }
+    return null;
+  }
+
+  function curPriceOf(tk) {
+    if (!state.data) return null;
+    for (var i = 0; i < state.data.items.length; i++) {
+      var it = state.data.items[i];
+      if (it.ticker === tk && it.price != null) return it.price;
+    }
+    var q = state.data.quotes ? state.data.quotes[tk] : null;
+    return q ? q.price : null;
+  }
+
+  function markBuy(tk) {
+    var en = findWatch(tk);
+    if (!en) return;
+    var p = curPriceOf(tk);
+    if (p == null) { showToast("시세가 없어 매수 표시를 기록할 수 없습니다"); return; }
+    en.buy_price = p; en.buy_at = todayStr();
+    en.sell_price = null; en.sell_at = null;   // 새 사이클 시작
+    persistWatch();
+    showToast("매수 표시 $" + p.toLocaleString() + " 기록됨");
+    renderContent();
+  }
+
+  function markSell(tk) {
+    var en = findWatch(tk);
+    if (!en || en.buy_price == null) return;
+    var p = curPriceOf(tk);
+    if (p == null) { showToast("시세가 없어 매도 표시를 기록할 수 없습니다"); return; }
+    en.sell_price = p; en.sell_at = todayStr();
+    persistWatch();
+    var ret = p / en.buy_price - 1;
+    showToast("매도 표시 — 확정 " + (ret >= 0 ? "+" : "") + fmtPct(ret));
+    renderContent();
+  }
+
   function setData(raw, persist) {
     var clean = sanitize(raw);   // 항상 정규화(불신): 캐시본/네트워크본 모두 안전화
     if (!clean) { showError("데이터 형식이 올바르지 않습니다."); return; }
@@ -338,7 +384,8 @@
         (wen.saved_price != null ? " · $" + wen.saved_price.toLocaleString() : "") + "</span><span>" +
         (ret == null ? "" : '이후 <b class="' + (ret >= 0 ? "pos" : "neg") + '">' +
           (ret >= 0 ? "+" : "") + fmtPct(ret) + "</b> ") +
-        '<button class="watch-del" data-tk="' + esc(wen.ticker) + '">삭제</button></span></div>';
+        '<button class="watch-del" data-tk="' + esc(wen.ticker) + '">삭제</button></span></div>' +
+        tradeHtml(wen, it.price);
     }
 
     return '<article class="card" style="border-left-color:' + esc(color) + '">' +
@@ -403,7 +450,31 @@
         (ret >= 0 ? "+" : "") + fmtPct(ret) + "</b> "
         : (cur == null ? "시세 없음 " : "")) +
       '<button class="watch-del" data-tk="' + esc(en.ticker) + '">삭제</button></span></div>' +
+      tradeHtml(en, cur) +
       '<div class="watch-note">오늘 스크리닝 목록에는 없음 — 시세로만 추적 중</div></article>';
+  }
+
+  // 가상 매매 행 (D20): 표식(매수/매도 가격·날짜) + 평가/확정 손익
+  function tradeHtml(en, cur) {
+    var tr = AppLogic.tradeReturn(en, cur);
+    if (!tr) {
+      return '<div class="trade-row"><span class="trade-hint">가상 매매 — 기록 없음</span>' +
+        '<button class="trade-buy" data-tk="' + esc(en.ticker) + '">매수 표시</button></div>';
+    }
+    var retHtml = tr.ret == null ? "시세 없음"
+      : '<b class="' + (tr.ret >= 0 ? "pos" : "neg") + '">' +
+        (tr.ret >= 0 ? "+" : "") + fmtPct(tr.ret) + "</b>";
+    if (tr.closed) {
+      return '<div class="trade-row"><span><i class="mark buy">매수</i>$' +
+        en.buy_price.toLocaleString() + ' <i class="mark sell">매도</i>$' +
+        en.sell_price.toLocaleString() + " · " + esc(en.sell_at || "") + "</span>" +
+        "<span>확정 " + retHtml +
+        ' <button class="trade-buy" data-tk="' + esc(en.ticker) + '">다시 매수</button></span></div>';
+    }
+    return '<div class="trade-row"><span><i class="mark buy">매수</i>$' +
+      en.buy_price.toLocaleString() + " · " + esc(en.buy_at || "") + "</span>" +
+      "<span>평가 " + retHtml +
+      ' <button class="trade-sell" data-tk="' + esc(en.ticker) + '">매도 표시</button></span></div>';
   }
   // 차트 (라이브러리 0, 오프라인 동작). 데이터는 sanitizeChart 통과분만 온다.
   // candle = 봉 + 5·10일선 + BB(20,±2σ). line = 구버전 종가 라인 폴백.
@@ -580,6 +651,10 @@
       if (star) { toggleWatch(star.getAttribute("data-tk")); return; }
       var del = e.target.closest(".watch-del");
       if (del) { removeWatch(del.getAttribute("data-tk")); return; }
+      var buy = e.target.closest(".trade-buy");
+      if (buy) { markBuy(buy.getAttribute("data-tk")); return; }
+      var sell = e.target.closest(".trade-sell");
+      if (sell) { markSell(sell.getAttribute("data-tk")); return; }
       var card = e.target.closest(".card"); if (card) card.classList.toggle("open");
     });
 

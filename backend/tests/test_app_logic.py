@@ -181,6 +181,45 @@ def test_watch_return_and_sort():
     assert by_ret == ["A", "B", "C"]   # +10% > -5% > 판정불가
 
 
+# ---- 가상 매매 표식 (D20 — 정상/누락/변조/모순) --------------------------------
+def test_sanitize_watch_trade_fields_and_orphan_sell():
+    c = _ctx()
+
+    def run(raw):
+        return json.loads(c.eval("JSON.stringify(AppLogic.sanitizeWatch(%s))" % json.dumps(raw)))
+
+    # 정상: 매수·매도 왕복 보존
+    ok = run([{"ticker": "A", "buy_price": 50.0, "buy_at": "2026-06-21",
+               "sell_price": 55.0, "sell_at": "2026-07-01"}])[0]
+    assert ok["buy_price"] == 50.0 and ok["sell_price"] == 55.0
+    assert ok["buy_at"] == "2026-06-21" and ok["sell_at"] == "2026-07-01"
+    # 누락: 매매 기록 없음 → null 정규화
+    none = run([{"ticker": "B"}])[0]
+    assert none["buy_price"] is None and none["sell_price"] is None
+    # 모순: 매수 없는 매도 → 매도만 버림
+    orphan = run([{"ticker": "C", "sell_price": 55.0, "sell_at": "2026-07-01"}])[0]
+    assert orphan["sell_price"] is None and orphan["sell_at"] is None
+    # 변조: 비수치/음수 매수가 → 매수·매도 모두 null (매도는 매수에 종속)
+    bad = run([{"ticker": "D", "buy_price": "악성", "sell_price": 55.0}])[0]
+    assert bad["buy_price"] is None and bad["sell_price"] is None
+
+
+def test_trade_return_states():
+    c = _ctx()
+
+    def tr(entry, cur):
+        return json.loads(c.eval(
+            "JSON.stringify(AppLogic.tradeReturn(%s, %s))" % (json.dumps(entry), json.dumps(cur))))
+
+    assert tr({"ticker": "A"}, 55.0) is None                       # 매수 없음
+    open_ = tr({"buy_price": 50.0}, 55.0)                          # 보유중 평가
+    assert open_["closed"] is False and abs(open_["ret"] - 0.10) < 1e-9
+    nocur = tr({"buy_price": 50.0}, None)                          # 시세 없음
+    assert nocur["closed"] is False and nocur["ret"] is None
+    closed = tr({"buy_price": 50.0, "sell_price": 45.0}, 999.0)    # 확정 — 현재가 무시
+    assert closed["closed"] is True and abs(closed["ret"] - (-0.10)) < 1e-9
+
+
 # ---- chart 필드 (경계 4종: 정상/누락/변조/과대) --------------------------------
 def test_sanitize_chart_normal_and_missing():
     c = _ctx()

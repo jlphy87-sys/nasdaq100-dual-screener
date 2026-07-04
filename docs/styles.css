@@ -233,6 +233,36 @@ body {
 .watch-del:active { transform: scale(0.95); }
 .watch-note { margin-top: 6px; font-size: 11px; color: var(--text-dim); opacity: 0.8; }
 
+/* 가상 매매 행 (D20): 매수/매도 표식 + 평가/확정 손익 */
+.trade-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--border);
+  font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+.trade-row b { font-weight: 800; }
+.trade-hint { opacity: 0.75; }
+.mark {
+  display: inline-block; font-style: normal; font-size: 10px; font-weight: 800;
+  padding: 1px 6px; border-radius: 6px; margin-right: 3px; vertical-align: 1px;
+}
+.mark.buy { background: var(--accent-soft); color: #9cc2ff; }
+.mark.sell { background: rgba(239, 93, 168, 0.18); color: #f9a8d4; }
+@media (prefers-color-scheme: light) {
+  .mark.buy { color: #1d4ed8; }
+  .mark.sell { color: #be2f7c; }
+}
+.trade-buy, .trade-sell {
+  border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px;
+  font-size: 11.5px; font-weight: 700; cursor: pointer;
+}
+.trade-buy { background: var(--accent-soft); color: #9cc2ff; border-color: rgba(76, 141, 255, 0.4); }
+.trade-sell { background: rgba(239, 93, 168, 0.14); color: #f9a8d4; border-color: rgba(239, 93, 168, 0.4); }
+@media (prefers-color-scheme: light) {
+  .trade-buy { color: #1d4ed8; }
+  .trade-sell { color: #be2f7c; }
+}
+.trade-buy:active, .trade-sell:active { transform: scale(0.95); }
+
 /* 카드가 확장 가능함을 알리는 화살표 */
 .chev {
   color: var(--text-dim); font-size: 11px; margin-left: 2px;

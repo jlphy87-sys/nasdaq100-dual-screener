@@ -143,16 +143,34 @@ var AppLogic = (function () {
       if (!tk || seen[tk]) continue;                     // 중복은 첫 항목 유지
       seen[tk] = true;
       var sp = num(e.saved_price);
+      // D20 가상 매매 표식: 매수 없는 매도는 모순 → 매도만 버린다(일관성)
+      var bp = num(e.buy_price), slp = num(e.sell_price);
+      bp = (bp != null && bp > 0) ? bp : null;
+      slp = (bp != null && slp != null && slp > 0) ? slp : null;
       out.push({
         ticker: tk,
         name: str(e.name) || tk,
         sector_kr: str(e.sector_kr) || "미분류",
         saved_at: str(e.saved_at),                       // 저장한 날짜 (기기 기준)
         saved_as_of: str(e.saved_as_of),                 // 저장 당시 데이터 기준일
-        saved_price: (sp != null && sp > 0) ? sp : null  // 저장가 (수익률 기준)
+        saved_price: (sp != null && sp > 0) ? sp : null, // 저장가 (수익률 기준)
+        buy_price: bp, buy_at: bp != null ? str(e.buy_at) : null,
+        sell_price: slp, sell_at: slp != null ? str(e.sell_at) : null
       });
     }
     return out;
+  }
+
+  // D20 가상 매매 손익. 매수 없으면 null.
+  // 매도됨 → {closed:true, ret:매도/매수-1} (확정 — 현재가와 무관).
+  // 보유중 → {closed:false, ret:현재가/매수-1 | null(시세 없음)}.
+  function tradeReturn(entry, curPrice) {
+    if (!entry) return null;
+    var bp = num(entry.buy_price), sp = num(entry.sell_price), cp = num(curPrice);
+    if (bp == null || bp <= 0) return null;
+    if (sp != null && sp > 0) return { closed: true, ret: sp / bp - 1 };
+    if (cp == null || cp <= 0) return { closed: false, ret: null };
+    return { closed: false, ret: cp / bp - 1 };
   }
 
   function watchReturn(entry, curPrice) {
@@ -321,6 +339,7 @@ var AppLogic = (function () {
     sanitizeQuotes: sanitizeQuotes,
     sanitizeWatch: sanitizeWatch,
     watchReturn: watchReturn,
+    tradeReturn: tradeReturn,
     sortWatch: sortWatch,
     itemsForTab: itemsForTab,
     filterSort: filterSort,

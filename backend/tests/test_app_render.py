@@ -260,6 +260,59 @@ def test_watch_tracks_dropped_ticker_via_quotes():
     assert "스크리닝 목록에는 없음" in html
 
 
+def test_trade_buy_then_sell_records_price_date_and_pnl():
+    # D20: 매수 표시 → 시세·날짜 기록 + 평가손익, 매도 표시 → 확정손익
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.0}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:50.0}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    assert "매수 표시" in _content(c)                 # 기록 없음 → 매수 버튼
+    _click_content(c, ".trade-buy", "ZZZZ")
+    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved["buy_price"] == 55.0 and len(saved["buy_at"]) == 10
+    html = _content(c)
+    assert "매수" in html and "$55" in html and "평가" in html
+    assert "매도 표시" in html                        # 보유중 → 매도 버튼
+    _click_content(c, ".trade-sell", "ZZZZ")
+    saved2 = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved2["sell_price"] == 55.0 and len(saved2["sell_at"]) == 10
+    html2 = _content(c)
+    assert "확정" in html2 and "+0.0%" in html2       # 55→55 확정 손익
+    assert "다시 매수" in html2
+
+
+def test_trade_open_position_shows_unrealized_pnl():
+    # 사전 매수(50) + 현재가 55 → 평가 +10.0% / 사전 매수·매도 → 확정 -10.0%
+    m = _mock("good")
+    m["quotes"] = {"UPUP": {"price": 55.0, "chg": 0.01}, "DOWN": {"price": 99.0, "chg": 0.0}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify(["
+           "{ticker:'UPUP', saved_at:'2026-06-20', saved_price:50.0,"
+           " buy_price:50.0, buy_at:'2026-06-21'},"
+           "{ticker:'DOWN', saved_at:'2026-06-20', saved_price:100.0,"
+           " buy_price:100.0, buy_at:'2026-06-21', sell_price:90.0, sell_at:'2026-07-01'}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "평가" in html and "+10.0%" in html        # UPUP 보유중 평가손익
+    assert "확정" in html and "-10.0%" in html        # DOWN 확정손익 (현재가 99 무시)
+
+
+def test_trade_tampered_fields_degrade_no_crash():
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.0}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', saved_at:'2026-06-20', saved_price:50.0,"
+           " buy_price:'악성', sell_price:55.0}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "ZZZZ" in html and "매수 표시" in html      # 기록 무효 → 초기 상태로 강등
+    assert "확정" not in html
+
+
 def test_watch_tampered_localstorage_no_crash():
     pre = "__ls['ndx.dual.watch.v1'] = '{\"악성\":true}';"
     c = _mount(_mock("good"), pre_js=pre)
