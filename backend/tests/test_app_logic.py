@@ -204,6 +204,16 @@ def test_sanitize_watch_trade_fields_and_orphan_sell():
     assert bad["buy_price"] is None and bad["sell_price"] is None
 
 
+def test_parse_price_boundaries():
+    c = _ctx()
+    assert c.eval("AppLogic.parsePrice('123.45')") == 123.45
+    assert c.eval("AppLogic.parsePrice('1,234.5')") == 1234.5   # 쉼표 허용
+    assert c.eval("AppLogic.parsePrice(50)") == 50              # 숫자 매핑
+    assert c.eval("AppLogic.parsePrice('50.129')") == 50.13     # 센트 반올림
+    for bad in ("''", "null", "'abc'", "'-5'", "'0'", "'1e999'"):
+        assert c.eval("AppLogic.parsePrice(%s)" % bad) is None  # 변조/누락 거부
+
+
 def test_trade_return_states():
     c = _ctx()
 

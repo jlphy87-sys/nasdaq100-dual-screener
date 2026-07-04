@@ -7,7 +7,7 @@
  *   탈출구: 아래 fetch 핸들러를 v2 의 cached || network 형태로 되돌리면 됨.
  * 버전 올리면 옛 캐시 정리.
  */
-var VERSION = "v9"; /* 관심 탭 가상 매수/매도 표식 + 손익 (D20, 2026-07-04) */
+var VERSION = "v10"; /* 매수/매도 가격 직접 입력 + 차트 기준선 표식 (D20b, 2026-07-04) */
 var SHELL_CACHE = "shell-" + VERSION;
 var DATA_CACHE = "data-" + VERSION;
 

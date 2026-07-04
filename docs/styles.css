@@ -263,6 +263,27 @@ body {
 }
 .trade-buy:active, .trade-sell:active { transform: scale(0.95); }
 
+/* D20b: 가격 입력폼 + 차트 매수/매도 기준선 */
+.trade-price {
+  width: 82px; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 8px; padding: 5px 7px; font-size: 13px;
+  font-variant-numeric: tabular-nums; margin-left: 2px;
+}
+.trade-ok, .trade-cancel {
+  border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px;
+  font-size: 11.5px; font-weight: 700; cursor: pointer; margin-left: 4px;
+}
+.trade-ok { background: var(--accent); color: #fff; border-color: var(--accent); }
+.trade-cancel { background: var(--surface-2); color: var(--text-dim); }
+.spark .mk-buy { stroke: #9cc2ff; stroke-width: 1; stroke-dasharray: 4 3; }
+.spark .mk-sell { stroke: #f9a8d4; stroke-width: 1; stroke-dasharray: 4 3; }
+.spark .mk-buy-t { fill: #9cc2ff; font-size: 8px; font-weight: 700; }
+.spark .mk-sell-t { fill: #f9a8d4; font-size: 8px; font-weight: 700; }
+@media (prefers-color-scheme: light) {
+  .spark .mk-buy { stroke: #1d4ed8; } .spark .mk-buy-t { fill: #1d4ed8; }
+  .spark .mk-sell { stroke: #be2f7c; } .spark .mk-sell-t { fill: #be2f7c; }
+}
+
 /* 카드가 확장 가능함을 알리는 화살표 */
 .chev {
   color: var(--text-dim); font-size: 11px; margin-left: 2px;

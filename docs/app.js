@@ -24,7 +24,8 @@
     activeSectors: new Set(), // 비어있으면 = 전체
     sort: { s1: "dollar_volume", s2: "rs_3m", both: "dollar_volume", watch: "saved_at" },
     view: "group",
-    watch: []                 // D19: sanitizeWatch 통과분만 유지
+    watch: [],                // D19: sanitizeWatch 통과분만 유지
+    tradeInput: null          // D20b: 열려 있는 가격 입력폼 {ticker, kind:"buy"|"sell"}
   };
 
   var fmtMoney = AppLogic.fmtMoney, fmtNum = AppLogic.fmtNum,
@@ -163,28 +164,51 @@
     return q ? q.price : null;
   }
 
-  function markBuy(tk) {
-    var en = findWatch(tk);
-    if (!en) return;
-    var p = curPriceOf(tk);
-    if (p == null) { showToast("시세가 없어 매수 표시를 기록할 수 없습니다"); return; }
-    en.buy_price = p; en.buy_at = todayStr();
-    en.sell_price = null; en.sell_at = null;   // 새 사이클 시작
-    persistWatch();
-    showToast("매수 표시 $" + p.toLocaleString() + " 기록됨");
+  // D20b: 버튼 클릭 → 즉시 기록이 아니라 가격 입력폼(현재 종가 기본값) 오픈.
+  // 사용자가 실제 체결가로 고쳐 기록할 수 있다 (WebView prompt 미지원 → 인라인 폼).
+  function openTradeInput(tk, kind) {
+    if (!findWatch(tk)) return;
+    if (kind === "sell") {
+      var en = findWatch(tk);
+      if (!en || en.buy_price == null) return;   // 매수 없는 매도 금지
+    }
+    state.tradeInput = { ticker: tk, kind: kind };
     renderContent();
   }
 
-  function markSell(tk) {
-    var en = findWatch(tk);
-    if (!en || en.buy_price == null) return;
-    var p = curPriceOf(tk);
-    if (p == null) { showToast("시세가 없어 매도 표시를 기록할 수 없습니다"); return; }
-    en.sell_price = p; en.sell_at = todayStr();
+  function confirmTradeInput() {
+    var ti = state.tradeInput;
+    if (!ti) return;
+    var inp = document.getElementById("tp-" + ti.ticker);
+    var p = AppLogic.parsePrice(inp ? inp.value : null);
+    if (p == null) { showToast("가격을 확인해 주세요 (양수 숫자)"); return; } // 폼 유지
+    var en = findWatch(ti.ticker);
+    if (!en) { state.tradeInput = null; renderContent(); return; }
+    if (ti.kind === "buy") {
+      en.buy_price = p; en.buy_at = todayStr();
+      en.sell_price = null; en.sell_at = null;   // 새 사이클 시작
+      showToast("매수 표시 $" + p.toLocaleString() + " 기록됨");
+    } else {
+      if (en.buy_price == null) { state.tradeInput = null; renderContent(); return; }
+      en.sell_price = p; en.sell_at = todayStr();
+      var ret = p / en.buy_price - 1;
+      showToast("매도 표시 — 확정 " + (ret >= 0 ? "+" : "") + fmtPct(ret));
+    }
+    state.tradeInput = null;
     persistWatch();
-    var ret = p / en.buy_price - 1;
-    showToast("매도 표시 — 확정 " + (ret >= 0 ? "+" : "") + fmtPct(ret));
     renderContent();
+  }
+
+  function cancelTradeInput() {
+    state.tradeInput = null;
+    renderContent();
+  }
+
+  // 차트에 얹을 매수/매도 가격선 — 어느 탭이든 관심 저장분이 있으면 표시
+  function tradeMarks(tk) {
+    var en = findWatch(tk);
+    if (!en || en.buy_price == null) return null;
+    return { buy: en.buy_price, sell: en.sell_price };
   }
 
   function setData(raw, persist) {
@@ -358,7 +382,7 @@
     }
 
     // 확장: 미니 차트(있으면) + 해당 스크린 전체 사용값 + (both 면) 반대쪽 값도 (명세 §8)
-    var detail = it.chart ? chartHtml(it.chart) : "";
+    var detail = it.chart ? chartHtml(it.chart, tradeMarks(it.ticker)) : "";
     if (it.s1 && (showS1 || both)) {
       detail += '<div class="detail-title">S1 · 반전 초기</div><div class="card-detail">' +
         dv("MACD", fmtNum(it.s1.macd, 4)) + dv("Signal", fmtNum(it.s1.signal, 4)) +
@@ -456,6 +480,15 @@
 
   // 가상 매매 행 (D20): 표식(매수/매도 가격·날짜) + 평가/확정 손익
   function tradeHtml(en, cur) {
+    var ti = state.tradeInput;
+    if (ti && ti.ticker === en.ticker) {   // 가격 입력폼 (기본값 = 현재 종가)
+      var label = ti.kind === "buy" ? "매수가" : "매도가";
+      return '<div class="trade-row trade-form"><span>' + label + ' $' +
+        '<input id="tp-' + esc(en.ticker) + '" class="trade-price" type="text" inputmode="decimal"' +
+        ' value="' + (cur == null ? "" : cur) + '" aria-label="' + label + '"></span><span>' +
+        '<button class="trade-ok">기록</button>' +
+        '<button class="trade-cancel">취소</button></span></div>';
+    }
     var tr = AppLogic.tradeReturn(en, cur);
     if (!tr) {
       return '<div class="trade-row"><span class="trade-hint">가상 매매 — 기록 없음</span>' +
@@ -478,8 +511,8 @@
   }
   // 차트 (라이브러리 0, 오프라인 동작). 데이터는 sanitizeChart 통과분만 온다.
   // candle = 봉 + 5·10일선 + BB(20,±2σ). line = 구버전 종가 라인 폴백.
-  function chartHtml(ch) {
-    return ch.mode === "candle" ? candleHtml(ch) : lineHtml(ch);
+  function chartHtml(ch, marks) {
+    return ch.mode === "candle" ? candleHtml(ch, marks) : lineHtml(ch);
   }
 
   function lineHtml(ch) {
@@ -506,7 +539,7 @@
       ' · <b class="' + cls + '">' + (chg >= 0 ? "+" : "") + fmtPct(chg) + "</b></span></div></div>";
   }
 
-  function candleHtml(ch) {
+  function candleHtml(ch, marks) {
     var n = ch.c.length, W = 320, H = 120, TOP = 5, BOT = 5;
     // 스케일: 봉 고저 + 유효한 밴드/이평값까지 포함해 잘림 방지
     var min = Infinity, max = -Infinity, i, v;
@@ -525,6 +558,11 @@
         if (v < min) min = v;
         if (v > max) max = v;
       }
+    }
+    // 매수/매도 가격선이 범위 밖이면 스케일을 넓혀 항상 보이게 (D20b)
+    if (marks) {
+      if (marks.buy != null) { if (marks.buy < min) min = marks.buy; if (marks.buy > max) max = marks.buy; }
+      if (marks.sell != null) { if (marks.sell < min) min = marks.sell; if (marks.sell > max) max = marks.sell; }
     }
     var span = (max - min) || 1;
     function Y(val) { return (TOP + (1 - (val - min) / span) * (H - TOP - BOT)).toFixed(1); }
@@ -570,12 +608,28 @@
         '" width="' + (half * 2).toFixed(1) + '" height="' + hgt.toFixed(1) + '"/>';
     }
 
+    // 매수/매도 가격 기준선 + 라벨 (배지와 동일 색 체계). 봉 날짜별 X 위치는
+    // 서버가 봉 날짜 배열을 싣지 않아 불가 — 가격 기준 가로선으로 표시(정직한 근사).
+    var mk = "";
+    function mline(p, cls, label) {
+      if (p == null) return "";
+      var y = parseFloat(Y(p));
+      var ty = y < 12 ? y + 9 : y - 3;   // 상단 잘림 방지
+      return '<line class="' + cls + '" x1="0" y1="' + y + '" x2="' + W + '" y2="' + y + '"/>' +
+        '<text class="' + cls + '-t" x="3" y="' + ty.toFixed(1) + '">' +
+        label + " " + p.toLocaleString() + "</text>";
+    }
+    if (marks) {
+      mk += mline(marks.buy, "mk-buy", "매수");
+      mk += mline(marks.sell, "mk-sell", "매도");
+    }
+
     var chg = ch.c[n - 1] / ch.c[0] - 1;
     var cc = chg >= 0 ? "pos" : "neg";
     return '<div class="chart-wrap">' +
       '<svg class="spark candle" viewBox="0 0 ' + W + " " + H + '" aria-hidden="true">' +
       band + poly(ch.bb_up, "bb-line") + poly(ch.bb_lo, "bb-line") + poly(ch.bb_mid, "bb-mid") +
-      candles + poly(ch.ma5, "ma5") + poly(ch.ma10, "ma10") + "</svg>" +
+      candles + poly(ch.ma5, "ma5") + poly(ch.ma10, "ma10") + mk + "</svg>" +
       '<div class="chart-cap"><span class="legend">' +
       '<i class="lg-ma5"></i>5일 <i class="lg-ma10"></i>10일 <i class="lg-bb"></i>BB(20,2σ)</span>' +
       '<span>저 ' + fmtNum(pmin, 2) + " · 고 " + fmtNum(pmax, 2) + "</span></div>" +
@@ -651,10 +705,13 @@
       if (star) { toggleWatch(star.getAttribute("data-tk")); return; }
       var del = e.target.closest(".watch-del");
       if (del) { removeWatch(del.getAttribute("data-tk")); return; }
+      if (e.target.closest(".trade-ok")) { confirmTradeInput(); return; }
+      if (e.target.closest(".trade-cancel")) { cancelTradeInput(); return; }
       var buy = e.target.closest(".trade-buy");
-      if (buy) { markBuy(buy.getAttribute("data-tk")); return; }
+      if (buy) { openTradeInput(buy.getAttribute("data-tk"), "buy"); return; }
       var sell = e.target.closest(".trade-sell");
-      if (sell) { markSell(sell.getAttribute("data-tk")); return; }
+      if (sell) { openTradeInput(sell.getAttribute("data-tk"), "sell"); return; }
+      if (e.target.closest(".trade-form")) return;  // 입력칸 터치가 카드 접힘으로 새지 않게
       var card = e.target.closest(".card"); if (card) card.classList.toggle("open");
     });
 

@@ -173,6 +173,17 @@ var AppLogic = (function () {
     return { closed: false, ret: cp / bp - 1 };
   }
 
+  // D20b: 사용자 입력 가격 파서 — 쉼표 허용, 양수·유한값만, 센트 반올림.
+  function parsePrice(v) {
+    if (typeof v === "number") v = String(v);
+    if (typeof v !== "string") return null;
+    var s = v.replace(/,/g, "").trim();
+    if (!s) return null;
+    var n = Number(s);
+    if (!isFinite(n) || n <= 0) return null;
+    return Math.round(n * 100) / 100;
+  }
+
   function watchReturn(entry, curPrice) {
     var sp = entry ? num(entry.saved_price) : null, cp = num(curPrice);
     if (sp == null || sp <= 0 || cp == null || cp <= 0) return null;
@@ -340,6 +351,7 @@ var AppLogic = (function () {
     sanitizeWatch: sanitizeWatch,
     watchReturn: watchReturn,
     tradeReturn: tradeReturn,
+    parsePrice: parsePrice,
     sortWatch: sortWatch,
     itemsForTab: itemsForTab,
     filterSort: filterSort,

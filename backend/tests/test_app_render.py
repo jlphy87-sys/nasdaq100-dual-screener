@@ -260,8 +260,8 @@ def test_watch_tracks_dropped_ticker_via_quotes():
     assert "스크리닝 목록에는 없음" in html
 
 
-def test_trade_buy_then_sell_records_price_date_and_pnl():
-    # D20: 매수 표시 → 시세·날짜 기록 + 평가손익, 매도 표시 → 확정손익
+def test_trade_buy_then_sell_with_price_input():
+    # D20b: 버튼 → 가격 입력폼(현재 종가 기본값) → 사용자가 고친 가격으로 기록
     m = _mock("good")
     m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.0}}
     pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
@@ -270,18 +270,70 @@ def test_trade_buy_then_sell_records_price_date_and_pnl():
     c = _mount(m, pre_js=pre)
     _click_tab(c, "watch")
     assert "매수 표시" in _content(c)                 # 기록 없음 → 매수 버튼
-    _click_content(c, ".trade-buy", "ZZZZ")
-    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
-    assert saved["buy_price"] == 55.0 and len(saved["buy_at"]) == 10
+    _click_content(c, ".trade-buy", "ZZZZ")           # 폼 오픈 (즉시 기록 아님)
     html = _content(c)
-    assert "매수" in html and "$55" in html and "평가" in html
-    assert "매도 표시" in html                        # 보유중 → 매도 버튼
-    _click_content(c, ".trade-sell", "ZZZZ")
-    saved2 = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
-    assert saved2["sell_price"] == 55.0 and len(saved2["sell_at"]) == 10
+    assert "trade-form" in html and 'id="tp-ZZZZ"' in html
+    assert 'value="55"' in html                       # 기본값 = 현재 종가
+    saved0 = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved0.get("buy_price") is None            # 아직 기록 전
+    c.eval("document.getElementById('tp-ZZZZ').value = '50.5'")  # 가격 조절
+    _click_content(c, ".trade-ok", "ZZZZ")
+    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved["buy_price"] == 50.5 and len(saved["buy_at"]) == 10
     html2 = _content(c)
-    assert "확정" in html2 and "+0.0%" in html2       # 55→55 확정 손익
-    assert "다시 매수" in html2
+    assert "평가" in html2 and "+8.9%" in html2       # 55/50.5-1
+    _click_content(c, ".trade-sell", "ZZZZ")          # 매도 폼
+    c.eval("document.getElementById('tp-ZZZZ').value = '60'")
+    _click_content(c, ".trade-ok", "ZZZZ")
+    saved2 = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved2["sell_price"] == 60.0 and len(saved2["sell_at"]) == 10
+    html3 = _content(c)
+    assert "확정" in html3 and "+18.8%" in html3      # 60/50.5-1
+    assert "다시 매수" in html3
+
+
+def test_trade_input_invalid_rejected_and_cancel():
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.0}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:50.0}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    _click_content(c, ".trade-buy", "ZZZZ")
+    c.eval("document.getElementById('tp-ZZZZ').value = '악성'")   # 변조 입력
+    _click_content(c, ".trade-ok", "ZZZZ")
+    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))[0]
+    assert saved.get("buy_price") is None            # 거부 — 기록 안 됨
+    assert "trade-form" in _content(c)               # 폼은 유지(다시 입력 기회)
+    _click_content(c, ".trade-cancel", "ZZZZ")       # 취소 → 폼 닫힘, 기록 없음
+    html = _content(c)
+    assert "trade-form" not in html and "매수 표시" in html
+
+
+def test_chart_trade_marker_lines_render():
+    # 매수/매도 가격선이 봉차트 위에 표시된다 (어느 탭이든 관심 저장분 기준)
+    m = _mock("good")
+    tk = m["items"][0]["ticker"]
+    m["items"][0]["chart"] = {
+        "closes": [100, 102, 101, 110],
+        "o": [99, 101, 102, 101], "h": [101, 103, 103, 111],
+        "l": [98, 100, 100, 100], "c": [100, 102, 101, 110],
+        "ma5": [None, 100.5, 101.0, 104.0], "ma10": [None, None, 100.8, 103.0],
+        "bb_mid": [None, 101.0, 101.5, 104.0],
+        "bb_up": [None, 103.0, 104.0, 112.0], "bb_lo": [None, 99.0, 99.5, 96.0],
+        "start": "2026-06-27", "end": "2026-07-02",
+    }
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'%s', saved_at:'2026-06-20', saved_price:100.0,"
+           " buy_price:101.0, buy_at:'2026-06-28',"
+           " sell_price:150.0, sell_at:'2026-07-01'}]);" % tk)
+    c = _mount(m, pre_js=pre)                        # S1 탭에서도 가격선 표시
+    html = _content(c)
+    assert 'class="mk-buy"' in html and "매수 101" in html
+    assert 'class="mk-sell"' in html and "매도 150" in html   # 범위 밖 → 스케일 확장
+    # 저장 없는 종목 차트에는 가격선 없음 (다른 카드까지 새지 않음)
+    assert html.count('class="mk-buy"') == 1
 
 
 def test_trade_open_position_shows_unrealized_pnl():
