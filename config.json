@@ -20,5 +20,6 @@
     "sort_by": "rs_3m"
   },
   "chart": { "bars": 63 },
+  "quotes": { "enabled": true },
   "debug_show_all": false
 }

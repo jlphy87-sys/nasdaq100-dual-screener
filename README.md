@@ -130,6 +130,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | `s2.pullback.min/max` | 3%/8% | 눌림 인정 범위 (D15) |
 | `s2.trigger.mode` | breakout | `macd_gc`로 바꾸면 트리거 실험 가능 |
 | `chart.bars` | 63 | 카드 펼침 시 봉차트(+5·10일선, BB 20·2σ)에 실을 최근 봉 수 (~3개월, 0=차트 끔) |
+| `quotes.enabled` | true | 전 유니버스 경량 시세를 results.json 에 포함 — 관심종목(★) 추적용 (D19) |
 | `debug_show_all` | false | true면 탈락 종목도 items에 포함(디버그) |
 
 ---
@@ -150,6 +151,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | D15 | S2 3·4층: 정배열 + 고점-15% 이내 + 3~8% 눌림 후 돌파 트리거 |
 | D16 | (예약) 어닝 캘린더 필터 — yfinance 캘린더 안정화 전까지 보류 |
 | D17 | APK = 의존성 0개 WebView 래퍼(`android/`), Actions에서 빌드→Release 발행. 서명 키는 즉석 생성(기본)·시크릿 고정(탈출구). 스토어 배포 시 TWA 교체 탈출구 |
+| D19 | 관심종목(★)은 폰 localStorage 소유(서버 무상태 유지). 저장일·저장가 스냅샷 기록, 스크리닝 탈락 후에도 `quotes`(전 유니버스 시세, ~4KB)로 계속 추적. 탈출구: quotes.enabled=false, 앱은 "시세 없음"으로 강등 |
 
 ---
 

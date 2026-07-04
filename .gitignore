@@ -14,3 +14,4 @@ android/release.keystore
 *.keystore
 *.jks
 *.apk
+*.zip

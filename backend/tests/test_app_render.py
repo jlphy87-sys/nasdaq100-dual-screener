@@ -73,13 +73,16 @@ function fetch(){
 """
 
 
-def _mount(mock, fetch_ok=True):
-    """mock 으로 앱을 마운트한 MiniRacer 컨텍스트를 돌려준다."""
+def _mount(mock, fetch_ok=True, pre_js=None):
+    """mock 으로 앱을 마운트한 MiniRacer 컨텍스트를 돌려준다.
+    pre_js: 앱 로드 전에 평가할 JS (예: __ls 에 관심종목 사전 저장)."""
     c = MiniRacer()
     c.eval("var __MOCK = %s;" % json.dumps(mock))
     c.eval(DOM_STUB)
     # DOM_STUB 가 __FETCH_OK 를 true 로 선언하므로 반드시 스텁 뒤에 덮어쓴다
     c.eval("__FETCH_OK = %s;" % ("true" if fetch_ok else "false"))
+    if pre_js:
+        c.eval(pre_js)
     for fn in ("app.logic.js", "app.js"):
         with open(os.path.join(DOCS, fn), encoding="utf-8") as f:
             c.eval(f.read())
@@ -211,6 +214,58 @@ def test_render_candle_chart_with_bands():
     assert "<rect" in html and 'class="cu"' in html      # 양봉 존재
     assert "bb-area" in html and "BB(20,2σ)" in html     # 밴드 + 범례
     assert "spark-line" not in html                      # 라인 폴백 아님
+
+
+def _click_content(c, selector, tk):
+    """content 위임 클릭 시뮬레이션: selector 에만 걸리는 가짜 target 으로 호출."""
+    c.eval("""
+      document.getElementById('content')._handlers.click({target:{closest:function(sel){
+        if(sel==='%s') return {getAttribute:function(){return '%s';}};
+        return null;
+      }}});
+    """ % (selector, tk))
+
+
+# ---- 관심종목 저장·삭제·추적 (D19) ---------------------------------------------
+def test_watch_save_delete_and_date_recorded():
+    c = _mount(_mock("good"))
+    _click_content(c, ".star", "MSFT")  # ☆ 클릭 → 저장
+    saved = json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')"))
+    assert saved[0]["ticker"] == "MSFT" and saved[0]["saved_price"] is not None
+    assert len(saved[0]["saved_at"]) == 10          # YYYY-MM-DD (저장한 날짜 기록)
+    assert str(c.eval("document.getElementById('count-watch')._text")) == "1"
+    assert "★" in _content(c)                        # 목록 카드의 별이 채워짐
+    _click_tab(c, "watch")                           # 관심 탭: 카드 + 저장일 + 삭제
+    html = _content(c)
+    assert "MSFT" in html and "저장 " in html and "삭제" in html
+    _click_content(c, ".watch-del", "MSFT")          # 삭제 → 빈 상태 + 저장소 반영
+    assert "저장한 종목이 없습니다" in _content(c)
+    assert json.loads(c.eval("localStorage.getItem('ndx.dual.watch.v1')")) == []
+
+
+def test_watch_tracks_dropped_ticker_via_quotes():
+    # 오늘 스크리닝에 없는 저장 종목도 quotes 시세로 계속 추적된다 (기능의 핵심)
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 55.0, "chg": 0.021}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:50.0}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "ZZZZ" in html and "$55" in html
+    assert "2026-06-20" in html                      # 저장일 표시
+    assert "+10.0%" in html                          # 50 → 55 저장 후 수익률
+    assert "+2.1%" in html                           # 오늘 등락 (quotes.chg)
+    assert "스크리닝 목록에는 없음" in html
+
+
+def test_watch_tampered_localstorage_no_crash():
+    pre = "__ls['ndx.dual.watch.v1'] = '{\"악성\":true}';"
+    c = _mount(_mock("good"), pre_js=pre)
+    assert str(c.eval("document.getElementById('count-watch')._text")) == "0"
+    _click_tab(c, "watch")
+    assert "저장한 종목이 없습니다" in _content(c)
 
 
 def test_render_candle_tampered_falls_back_to_line():

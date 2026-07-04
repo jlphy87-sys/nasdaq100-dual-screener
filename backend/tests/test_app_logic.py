@@ -131,6 +131,56 @@ def test_formats():
     assert c.eval("AppLogic.fmtNum('bad')") == "—"
 
 
+# ---- 관심종목/quotes (D19 — 경계 4종: 정상/누락/변조/상한) ----------------------
+def test_sanitize_quotes_normal_missing_tampered():
+    c = _ctx()
+    good = _mock("good")
+    good["quotes"] = {"AAPL": {"price": 212.44, "chg": 0.012},
+                      "BAD1": {"price": -5, "chg": 0},      # 음수 가격 → 항목 제외
+                      "BAD2": "악성",                        # 비객체 → 제외
+                      "NOCHG": {"price": 10.0, "chg": "x"}}  # chg 변조 → null 강등
+    out = _sanitize(c, good)
+    assert out["quotes"]["AAPL"] == {"price": 212.44, "chg": 0.012}
+    assert "BAD1" not in out["quotes"] and "BAD2" not in out["quotes"]
+    assert out["quotes"]["NOCHG"]["chg"] is None
+    del good["quotes"]  # 누락(구버전 results.json) → 빈 객체
+    assert _sanitize(c, good)["quotes"] == {}
+
+
+def test_sanitize_watch_normal_dedupe_cap_tampered():
+    c = _ctx()
+
+    def run(raw):
+        return json.loads(c.eval("JSON.stringify(AppLogic.sanitizeWatch(%s))" % json.dumps(raw)))
+
+    ok = run([{"ticker": "AAPL", "name": "Apple", "sector_kr": "IT/기술",
+               "saved_at": "2026-07-04", "saved_as_of": "2026-07-02", "saved_price": 212.44},
+              {"ticker": "AAPL", "saved_price": 1},     # 중복 → 첫 항목 유지
+              {"ticker": "MSFT", "saved_price": -3},    # 음수 저장가 → null 강등
+              {"no_ticker": True}, "악성", None])        # 티커 없음/비객체 → 제외
+    assert [e["ticker"] for e in ok] == ["AAPL", "MSFT"]
+    assert ok[0]["saved_at"] == "2026-07-04" and ok[0]["saved_price"] == 212.44
+    assert ok[1]["saved_price"] is None and ok[1]["name"] == "MSFT"
+    assert run("not-an-array") == [] and run(None) == []
+    assert len(run([{"ticker": "T%d" % i} for i in range(300)])) == 200  # 상한
+
+
+def test_watch_return_and_sort():
+    c = _ctx()
+    entries = [{"ticker": "A", "saved_at": "2026-07-01", "saved_price": 100.0},
+               {"ticker": "B", "saved_at": "2026-07-03", "saved_price": 200.0},
+               {"ticker": "C", "saved_at": None, "saved_price": None}]
+    c.eval("var EN=%s; var PR={A:110.0,B:190.0,C:50.0};" % json.dumps(entries))
+    assert abs(c.eval("AppLogic.watchReturn(EN[0], 110.0)") - 0.10) < 1e-9
+    assert c.eval("AppLogic.watchReturn(EN[2], 50.0)") is None  # 저장가 없음 → 판정불가
+    by_date = json.loads(c.eval(
+        "JSON.stringify(AppLogic.sortWatch(EN, PR, 'saved_at').map(function(e){return e.ticker;}))"))
+    assert by_date == ["B", "A", "C"]  # 최신 저장 먼저, 날짜 없음은 뒤로
+    by_ret = json.loads(c.eval(
+        "JSON.stringify(AppLogic.sortWatch(EN, PR, 'ret').map(function(e){return e.ticker;}))"))
+    assert by_ret == ["A", "B", "C"]   # +10% > -5% > 판정불가
+
+
 # ---- chart 필드 (경계 4종: 정상/누락/변조/과대) --------------------------------
 def test_sanitize_chart_normal_and_missing():
     c = _ctx()

@@ -7,7 +7,7 @@
  *   탈출구: 아래 fetch 핸들러를 v2 의 cached || network 형태로 되돌리면 됨.
  * 버전 올리면 옛 캐시 정리.
  */
-var VERSION = "v7"; /* 미니 차트를 봉차트 + 5·10일선 + BB(20,2σ) 로 (2026-07-03) */
+var VERSION = "v8"; /* 관심종목 저장·삭제·추적 탭 (D19, 2026-07-04) */
 var SHELL_CACHE = "shell-" + VERSION;
 var DATA_CACHE = "data-" + VERSION;
 

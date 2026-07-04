@@ -151,6 +151,27 @@ def test_chart_disabled_by_knob():
     assert "chart" not in it
 
 
+def test_quotes_field_covers_all_fetched_tickers():
+    # D19: 관심종목 추적용 — 스크리닝 탈락 종목(CCC)도 quotes 에는 실린다.
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df(),
+              "CCC": make_ohlcv(np.linspace(100, 90, 300))}
+    r = _build(frames)
+    assert "AAA" in r["quotes"] and "CCC" in r["quotes"]
+    q = r["quotes"]["CCC"]
+    assert q["price"] > 0
+    assert abs(q["price"] - float(frames["CCC"]["Close"].iloc[-1])) < 0.01
+    exp = float(frames["CCC"]["Close"].iloc[-1] / frames["CCC"]["Close"].iloc[-2] - 1)
+    assert abs(q["chg"] - exp) < 1e-3  # 등락률 = 마지막/직전 - 1
+
+
+def test_quotes_disabled_by_knob():
+    config = json.loads(json.dumps(CONFIG))
+    config["quotes"] = {"enabled": False}
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
+    r = _build(frames, config=config)
+    assert r["quotes"] == {}  # 키는 유지(계약), 내용만 비움
+
+
 def test_chart_ohlc_and_bands_consistent():
     frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
     r = _build(frames)

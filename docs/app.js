@@ -7,21 +7,24 @@
   "use strict";
 
   var LS_KEY = "ndx.dual.results.v1";
+  var WATCH_KEY = "ndx.dual.watch.v1";   // D19: 관심종목은 폰 로컬 소유
   var DATA_URL = "./data/results.json";
 
   // 탭별 정렬 옵션 (명세 §6: S1 기본 거래대금↓, S2 기본 rs_3m↓)
   var SORT_OPTIONS = {
-    s1:   [["dollar_volume", "거래대금 ↓"], ["slow_k", "SlowK ↓"], ["name", "종목명"]],
-    s2:   [["rs_3m", "RS(3m) ↓"], ["drawdown", "고점대비 ↑"], ["name", "종목명"]],
-    both: [["dollar_volume", "거래대금 ↓"], ["rs_3m", "RS(3m) ↓"], ["name", "종목명"]]
+    s1:    [["dollar_volume", "거래대금 ↓"], ["slow_k", "SlowK ↓"], ["name", "종목명"]],
+    s2:    [["rs_3m", "RS(3m) ↓"], ["drawdown", "고점대비 ↑"], ["name", "종목명"]],
+    both:  [["dollar_volume", "거래대금 ↓"], ["rs_3m", "RS(3m) ↓"], ["name", "종목명"]],
+    watch: [["saved_at", "저장일 ↓"], ["ret", "저장후 수익률 ↓"], ["name", "종목명"]]
   };
 
   var state = {
     data: null,
     tab: "s1",
     activeSectors: new Set(), // 비어있으면 = 전체
-    sort: { s1: "dollar_volume", s2: "rs_3m", both: "dollar_volume" },
-    view: "group"
+    sort: { s1: "dollar_volume", s2: "rs_3m", both: "dollar_volume", watch: "saved_at" },
+    view: "group",
+    watch: []                 // D19: sanitizeWatch 통과분만 유지
   };
 
   var fmtMoney = AppLogic.fmtMoney, fmtNum = AppLogic.fmtNum,
@@ -83,6 +86,61 @@
     });
   }
 
+  // ---- 관심종목 (D19: 저장·삭제·저장일 기록) ---------------------------------
+  // 저장일은 사용자 '행동'의 시각이므로 기기 날짜가 원천 (D7 의 as_of 재조립과
+  // 다른 범주). 데이터 기준일은 saved_as_of 로 따로 남겨 수익률 기준을 명시.
+  function todayStr() {
+    var d = new Date();
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (day < 10 ? "0" : "") + day;
+  }
+
+  function loadWatch() {
+    try {
+      state.watch = AppLogic.sanitizeWatch(JSON.parse(localStorage.getItem(WATCH_KEY) || "[]"));
+    } catch (e) { state.watch = []; }  // 손상 저장분 → 빈 목록 (크래시 금지)
+  }
+
+  function persistWatch() {
+    try { localStorage.setItem(WATCH_KEY, JSON.stringify(state.watch)); } catch (e) {}
+  }
+
+  function isWatched(tk) {
+    for (var i = 0; i < state.watch.length; i++) {
+      if (state.watch[i].ticker === tk) return true;
+    }
+    return false;
+  }
+
+  function toggleWatch(tk) {
+    if (!tk) return;
+    if (isWatched(tk)) { removeWatch(tk); return; }
+    var it = null;
+    if (state.data) {
+      for (var i = 0; i < state.data.items.length; i++) {
+        if (state.data.items[i].ticker === tk) { it = state.data.items[i]; break; }
+      }
+    }
+    if (!it) return;
+    state.watch.unshift({
+      ticker: it.ticker, name: it.name, sector_kr: it.sector_kr,
+      saved_at: todayStr(),
+      saved_as_of: state.data.as_of,
+      saved_price: it.price
+    });
+    state.watch = AppLogic.sanitizeWatch(state.watch);  // 상한·중복 방어 일원화
+    persistWatch();
+    showToast("★ 저장됨 — 관심 탭에서 추적");
+    renderTabs(); renderContent();
+  }
+
+  function removeWatch(tk) {
+    state.watch = state.watch.filter(function (e) { return e.ticker !== tk; });
+    persistWatch();
+    showToast("관심종목에서 삭제됨");
+    renderTabs(); renderContent();
+  }
+
   function setData(raw, persist) {
     var clean = sanitize(raw);   // 항상 정규화(불신): 캐시본/네트워크본 모두 안전화
     if (!clean) { showError("데이터 형식이 올바르지 않습니다."); return; }
@@ -110,7 +168,8 @@
     document.getElementById("count-s1").textContent = c.s1;
     document.getElementById("count-s2").textContent = c.s2;
     document.getElementById("count-both").textContent = c.both;
-    ["s1", "s2", "both"].forEach(function (t) {
+    document.getElementById("count-watch").textContent = state.watch.length;
+    ["s1", "s2", "both", "watch"].forEach(function (t) {
       document.getElementById("tab-" + t).classList.toggle("active", state.tab === t);
     });
   }
@@ -149,6 +208,7 @@
 
   function renderChips() {
     var box = document.getElementById("sector-chips");
+    if (state.tab === "watch") { box.innerHTML = ""; return; }  // 관심 탭은 단일 목록
     var items = tabItems();
     // 칩 개수는 '현재 탭' 기준으로 재계산 → 리스트와 항상 일치
     var perSector = {}, total = items.length;
@@ -175,6 +235,7 @@
 
   function renderContent() {
     var el = document.getElementById("content");
+    if (state.tab === "watch") { el.innerHTML = renderWatch(); return; }
     var r = state.data.regime;
     // S2/겹침 탭 + 체제 미통과/판정불가 → 리스트 대신 안내 (배너와 중복이지만 본문에도)
     if ((state.tab === "s2" || state.tab === "both") && r.enabled && r.ok !== true) {
@@ -217,19 +278,24 @@
       return '<section class="sector-group"><div class="sector-head">' +
         '<span class="swatch" style="background:' + esc(color) + '"></span>' +
         "<span>" + esc(g.key) + '</span><span class="n">' + g.items.length + "종목</span></div>" +
-        g.items.map(cardHtml).join("") + "</section>";
+        // map(cardHtml) 금지: map 이 넘기는 index 가 2번째 인자(관심 스냅샷)로 오인됨
+        g.items.map(function (x) { return cardHtml(x); }).join("") + "</section>";
     }).join("");
   }
 
-  function cardHtml(it) {
+  // wen(관심 스냅샷)이 오면 저장일·저장가·저장후 수익률 행을 덧붙인다 (관심 탭 전용)
+  function cardHtml(it, wen) {
     var color = sectorColor(it.sector_kr);
     var both = it.pass_s1 && it.pass_s2;
     var badge = both ? '<span class="badge both">S1·S2</span>'
       : (it.pass_s1 ? '<span class="badge s1">S1</span>' : '<span class="badge s2">S2</span>');
+    var watched = isWatched(it.ticker);
+    var star = '<button class="star' + (watched ? " on" : "") + '" data-tk="' + esc(it.ticker) +
+      '" aria-label="관심종목 저장/삭제">' + (watched ? "★" : "☆") + "</button>";
 
     var row2 = "";
-    var showS1 = (state.tab === "s1" || state.tab === "both") && it.s1;
-    var showS2 = (state.tab === "s2" || state.tab === "both") && it.s2;
+    var showS1 = (state.tab === "s1" || state.tab === "both" || state.tab === "watch") && it.s1;
+    var showS2 = (state.tab === "s2" || state.tab === "both" || state.tab === "watch") && it.s2;
     if (showS1) {
       row2 += '<div class="card-row2">' +
         kv("골든크로스", esc(it.s1.gc_date || "—")) +
@@ -265,13 +331,79 @@
         "</div>";
     }
 
+    var watchRow = "";
+    if (wen && wen.ticker) {
+      var ret = AppLogic.watchReturn(wen, it.price);
+      watchRow = '<div class="watch-row"><span>저장 ' + esc(wen.saved_at || "—") +
+        (wen.saved_price != null ? " · $" + wen.saved_price.toLocaleString() : "") + "</span><span>" +
+        (ret == null ? "" : '이후 <b class="' + (ret >= 0 ? "pos" : "neg") + '">' +
+          (ret >= 0 ? "+" : "") + fmtPct(ret) + "</b> ") +
+        '<button class="watch-del" data-tk="' + esc(wen.ticker) + '">삭제</button></span></div>';
+    }
+
     return '<article class="card" style="border-left-color:' + esc(color) + '">' +
       '<div class="card-row1"><span class="tk">' + esc(it.ticker) + "</span>" +
       '<span class="dot" style="background:' + esc(color) + '"></span>' +
       '<span class="nm">' + esc(it.name) + "</span>" +
       '<span class="price">' + (it.price == null ? "—" : "$" + it.price.toLocaleString()) + "</span>" +
-      '<span class="badges">' + badge + '</span><span class="chev">▼</span></div>' +
-      row2 + detail + "</article>";
+      '<span class="badges">' + badge + "</span>" + star + '<span class="chev">▼</span></div>' +
+      watchRow + row2 + detail + "</article>";
+  }
+
+  // ---- 관심 탭 렌더 (D19) ----------------------------------------------------
+  function renderWatch() {
+    if (state.watch.length === 0) {
+      return '<div class="empty"><div class="icon">☆</div>' +
+        '<div class="big">저장한 종목이 없습니다.</div>' +
+        '<div class="small">카드 오른쪽의 ☆ 를 누르면 여기에 저장되고,<br>' +
+        "저장일·저장가 대비 수익률로 계속 추적할 수 있습니다.</div></div>";
+    }
+    var quotes = state.data.quotes || {};
+    var liveMap = {};
+    for (var i = 0; i < state.data.items.length; i++) {
+      liveMap[state.data.items[i].ticker] = state.data.items[i];
+    }
+    var prices = {};
+    for (var j = 0; j < state.watch.length; j++) {
+      var tk = state.watch[j].ticker;
+      var live = liveMap[tk];
+      prices[tk] = (live && live.price != null) ? live.price
+        : (quotes[tk] ? quotes[tk].price : null);
+    }
+    var entries = AppLogic.sortWatch(state.watch, prices, state.sort.watch);
+    var out = "";
+    for (var k = 0; k < entries.length; k++) {
+      var en = entries[k];
+      // 오늘 스크리닝에 있으면 정식 카드(차트 포함) + 관심 행, 없으면 시세 추적 카드
+      out += liveMap[en.ticker]
+        ? cardHtml(liveMap[en.ticker], en)
+        : watchCardHtml(en, quotes[en.ticker] || null);
+    }
+    return out;
+  }
+
+  // 오늘 결과에 없는 저장 종목: quotes 시세로 추적 (구버전 JSON 이면 "시세 없음")
+  function watchCardHtml(en, q) {
+    var color = sectorColor(en.sector_kr);
+    var cur = q ? q.price : null;
+    var chg = q ? q.chg : null;
+    var ret = AppLogic.watchReturn(en, cur);
+    return '<article class="card watch-card" style="border-left-color:' + esc(color) + '">' +
+      '<div class="card-row1"><span class="tk">' + esc(en.ticker) + "</span>" +
+      '<span class="dot" style="background:' + esc(color) + '"></span>' +
+      '<span class="nm">' + esc(en.name) + "</span>" +
+      '<span class="price">' + (cur == null ? "—" : "$" + cur.toLocaleString()) + "</span>" +
+      '<span class="badges"><span class="badge watch">추적</span></span>' +
+      '<button class="star on" data-tk="' + esc(en.ticker) + '" aria-label="관심종목 삭제">★</button></div>' +
+      '<div class="watch-row"><span>저장 ' + esc(en.saved_at || "—") +
+      (en.saved_price != null ? " · $" + en.saved_price.toLocaleString() : "") + "</span><span>" +
+      (chg == null ? "" : '오늘 <b class="' + (chg >= 0 ? "pos" : "neg") + '">' +
+        (chg >= 0 ? "+" : "") + fmtPct(chg) + "</b> · ") +
+      (ret != null ? '이후 <b class="' + (ret >= 0 ? "pos" : "neg") + '">' +
+        (ret >= 0 ? "+" : "") + fmtPct(ret) + "</b> "
+        : (cur == null ? "시세 없음 " : "")) +
+      '<button class="watch-del" data-tk="' + esc(en.ticker) + '">삭제</button></span></div>' +
+      '<div class="watch-note">오늘 스크리닝 목록에는 없음 — 시세로만 추적 중</div></article>';
   }
   // 차트 (라이브러리 0, 오프라인 동작). 데이터는 sanitizeChart 통과분만 온다.
   // candle = 봉 + 5·10일선 + BB(20,±2σ). line = 구버전 종가 라인 폴백.
@@ -417,7 +549,7 @@
   }
 
   function wire() {
-    ["s1", "s2", "both"].forEach(function (t) {
+    ["s1", "s2", "both", "watch"].forEach(function (t) {
       document.getElementById("tab-" + t).addEventListener("click", function () { setTab(t); });
     });
     document.getElementById("refresh-btn").addEventListener("click", function () {
@@ -443,6 +575,11 @@
     });
 
     document.getElementById("content").addEventListener("click", function (e) {
+      // ☆/삭제 버튼이 먼저 — 카드 펼침 토글로 흘러가지 않게 여기서 끝낸다
+      var star = e.target.closest(".star");
+      if (star) { toggleWatch(star.getAttribute("data-tk")); return; }
+      var del = e.target.closest(".watch-del");
+      if (del) { removeWatch(del.getAttribute("data-tk")); return; }
       var card = e.target.closest(".card"); if (card) card.classList.toggle("open");
     });
 
@@ -484,6 +621,7 @@
   // ---- 시작 ------------------------------------------------------------------
   function init() {
     wire();
+    loadWatch();
     loadCachedThenRevalidate();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(function () {});

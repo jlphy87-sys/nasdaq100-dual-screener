@@ -76,6 +76,27 @@ def _chart_block(df, bars: int) -> dict | None:
         return None
 
 
+def _quote(df) -> dict | None:
+    """관심종목(폰 로컬 저장) 추적용 경량 시세 — 전 유니버스에 싣는다 (D19).
+
+    이유: 저장한 종목이 스크리닝에서 빠진 날에도 앱이 현재가·일간 등락을
+    계속 보여줘야 "추적"이 성립한다 (관심 목록은 폰 localStorage 에만 있어
+    서버는 어떤 종목이 저장됐는지 모름 → 전부 싣는 수밖에 없음).
+    비용: 종목당 ~40B, 전체 ~4KB. 탈출구: config.quotes.enabled=false.
+    """
+    try:
+        closes = df["Close"].dropna()
+        if len(closes) == 0:
+            return None
+        price = round(float(closes.iloc[-1]), 2)
+        chg = None
+        if len(closes) >= 2 and float(closes.iloc[-2]) > 0:
+            chg = round(float(closes.iloc[-1] / closes.iloc[-2] - 1), 4)
+        return {"price": price, "chg": chg}
+    except Exception:  # noqa: BLE001 — 시세는 부가 정보: 실패해도 본 판정은 산다
+        return None
+
+
 def build(
     config: dict,
     root: str,
@@ -94,6 +115,7 @@ def build(
     s2cfg = config["s2"]
     debug_show_all = bool(config.get("debug_show_all", False))
     chart_bars = int(config.get("chart", {}).get("bars", 63))  # ~3개월 (0=차트 생략)
+    quotes_on = bool(config.get("quotes", {}).get("enabled", True))  # D19 관심종목 추적용
 
     # ---- 유니버스 (D2) ------------------------------------------------------
     warnings: list[str] = []
@@ -133,6 +155,7 @@ def build(
     s1_evals: dict[str, dict] = {}
     s2_evals: dict[str, dict] = {}
     chart_src: dict[str, pd.DataFrame] = {}  # 카드 차트용 OHLC 프레임 보관
+    quotes: dict[str, dict] = {}             # D19: 전 유니버스 경량 시세 (관심종목 추적)
     last_bar_dates: list[str] = []
 
     for ticker in tickers:
@@ -141,6 +164,10 @@ def build(
             if df is None or len(df) == 0:
                 errors.append({"ticker": ticker, "reason": "데이터 없음"})
                 continue
+            if quotes_on:
+                q = _quote(df)
+                if q:
+                    quotes[ticker] = q
             e1 = evaluate_s1(df, s1cfg)
             e2 = evaluate_s2(df, qqq_close, s2cfg)
             if e1 is None and e2 is None:
@@ -234,6 +261,7 @@ def build(
         "errors": errors,
         "warnings": warnings,
         "sectors": sectors,
+        "quotes": quotes,  # D19: 관심종목(로컬 저장) 추적용 — 계약(§7) 필드 추가
         "items": items,
     }
 

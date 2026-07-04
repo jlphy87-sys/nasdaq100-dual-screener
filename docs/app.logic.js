@@ -113,6 +113,74 @@ var AppLogic = (function () {
     return { mode: "line", closes: closes, start: start, end: end };
   }
 
+  // ---- 관심종목/시세 (D19) --------------------------------------------------
+  // quotes: 전 유니버스 경량 시세 — 저장 종목이 스크리닝에서 빠진 날에도 추적.
+  // 구버전 results.json 엔 없음 → 빈 객체로 정규화(앱은 "시세 없음" 표시).
+  function sanitizeQuotes(raw) {
+    var out = {};
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+    var keys = Object.keys(raw), n = 0;
+    for (var i = 0; i < keys.length && n < 500; i++) {   // 개수 상한: 변조 방어
+      var q = raw[keys[i]];
+      if (!q || typeof q !== "object") continue;
+      var price = num(q.price);
+      if (price == null || price <= 0) continue;
+      out[keys[i]] = { price: price, chg: num(q.chg) };
+      n++;
+    }
+    return out;
+  }
+
+  // 관심 목록은 폰 localStorage 소유 — 여기도 불신(변조/구버전/중복) 정규화.
+  // 상한 200: 변조로 거대 배열이 와도 렌더·저장 비용을 제한.
+  function sanitizeWatch(raw) {
+    if (!Array.isArray(raw)) return [];
+    var out = [], seen = {};
+    for (var i = 0; i < raw.length && out.length < 200; i++) {
+      var e = raw[i];
+      if (!e || typeof e !== "object") continue;
+      var tk = str(e.ticker);
+      if (!tk || seen[tk]) continue;                     // 중복은 첫 항목 유지
+      seen[tk] = true;
+      var sp = num(e.saved_price);
+      out.push({
+        ticker: tk,
+        name: str(e.name) || tk,
+        sector_kr: str(e.sector_kr) || "미분류",
+        saved_at: str(e.saved_at),                       // 저장한 날짜 (기기 기준)
+        saved_as_of: str(e.saved_as_of),                 // 저장 당시 데이터 기준일
+        saved_price: (sp != null && sp > 0) ? sp : null  // 저장가 (수익률 기준)
+      });
+    }
+    return out;
+  }
+
+  function watchReturn(entry, curPrice) {
+    var sp = entry ? num(entry.saved_price) : null, cp = num(curPrice);
+    if (sp == null || sp <= 0 || cp == null || cp <= 0) return null;
+    return cp / sp - 1;
+  }
+
+  // prices: {ticker: 현재가|null}. key: saved_at(기본, 최신순) | ret | name
+  function sortWatch(entries, prices, key) {
+    var out = entries.slice();
+    var pr = prices || {};
+    out.sort(function (a, b) {
+      if (key === "name") return a.ticker < b.ticker ? -1 : (a.ticker > b.ticker ? 1 : 0);
+      if (key === "ret") {
+        var ra = watchReturn(a, pr[a.ticker]), rb = watchReturn(b, pr[b.ticker]);
+        if (ra == null && rb == null) return a.ticker < b.ticker ? -1 : 1;
+        if (ra == null) return 1;   // 판정불가는 뒤로
+        if (rb == null) return -1;
+        return rb - ra;
+      }
+      var sa = a.saved_at || "", sb = b.saved_at || "";
+      if (sa !== sb) return sa < sb ? 1 : -1;            // 최신 저장이 위로
+      return a.ticker < b.ticker ? -1 : 1;
+    });
+    return out;
+  }
+
   function sanitizeItem(raw) {
     if (!raw || typeof raw !== "object") return null;
     var ticker = str(raw.ticker);
@@ -185,6 +253,7 @@ var AppLogic = (function () {
       config_summary: { s1: str(cs.s1), s2: str(cs.s2) },
       errors_count: num(raw.errors_count) || 0,
       sectors: sectors,
+      quotes: sanitizeQuotes(raw.quotes),
       items: items
     };
   }
@@ -249,6 +318,10 @@ var AppLogic = (function () {
 
   return {
     sanitize: sanitize,
+    sanitizeQuotes: sanitizeQuotes,
+    sanitizeWatch: sanitizeWatch,
+    watchReturn: watchReturn,
+    sortWatch: sortWatch,
     itemsForTab: itemsForTab,
     filterSort: filterSort,
     groupBySector: groupBySector,
