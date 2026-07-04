@@ -250,6 +250,15 @@ def test_sanitize_watch_trades_history():
     assert len(run([{"ticker": "C", "trades": many}])[0]["trades"]) == 50  # 상한
 
 
+def test_days_between_boundaries():
+    c = _ctx()
+    assert c.eval("AppLogic.daysBetween('2026-06-21','2026-07-01')") == 10
+    assert c.eval("AppLogic.daysBetween('2026-07-01','2026-07-01')") == 0   # 당일
+    assert c.eval("AppLogic.daysBetween('2026-07-02','2026-07-01')") is None  # 역전
+    assert c.eval("AppLogic.daysBetween('악성','2026-07-01')") is None        # 변조
+    assert c.eval("AppLogic.daysBetween(null,'2026-07-01')") is None          # 누락
+
+
 def test_trade_rows_merge_history_and_current():
     c = _ctx()
     entries = [
@@ -261,14 +270,17 @@ def test_trade_rows_merge_history_and_current():
          "sell_price": 220.0, "sell_at": "2026-06-20"},          # 확정(현재 사이클)
     ]
     c.eval("var EN = AppLogic.sanitizeWatch(%s); var PR={A:88.0,B:999.0};" % json.dumps(entries))
-    rows = json.loads(c.eval("JSON.stringify(AppLogic.tradeRows(EN, PR))"))
+    rows = json.loads(c.eval("JSON.stringify(AppLogic.tradeRows(EN, PR, '2026-07-04'))"))
     assert len(rows) == 3
     assert [r["ticker"] for r in rows] == ["A", "B", "A"]        # 최근 활동순
     open_a = rows[0]
     assert open_a["i"] == -1 and open_a["closed"] is False
     assert abs(open_a["ret"] - 0.10) < 1e-9                      # 88/80 평가
+    assert open_a["days"] == 3                                   # 07-01 → today(07-04)
     assert rows[1]["closed"] is True and abs(rows[1]["ret"] - 0.10) < 1e-9  # 220/200
+    assert rows[1]["days"] == 5                                  # 06-15 → 06-20
     assert rows[2]["i"] == 0 and abs(rows[2]["ret"] - (-0.10)) < 1e-9       # 90/100
+    assert rows[2]["days"] == 9                                  # 06-01 → 06-10
 
 
 # ---- chart 필드 (경계 4종: 정상/누락/변조/과대) --------------------------------

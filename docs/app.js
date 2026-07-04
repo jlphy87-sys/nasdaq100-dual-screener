@@ -534,17 +534,19 @@
 
   // D20c: 매매 기록 표 — 관심 탭 상단, 이력 + 현재 사이클 한눈에
   function tradeLogHtml(prices) {
-    var rows = AppLogic.tradeRows(state.watch, prices);
+    var rows = AppLogic.tradeRows(state.watch, prices, todayStr());
     if (!rows.length) return "";
     var body = "";
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
+      var days = r.days == null ? "—" : (r.days === 0 ? "당일" : r.days + "일");
       body += '<tr><td class="tk2">' + esc(r.ticker) + "</td>" +
         "<td>$" + r.buy_price.toLocaleString() +
         '<span class="d">' + esc(r.buy_at || "") + "</span></td>" +
         "<td>" + (r.sell_price != null
           ? "$" + r.sell_price.toLocaleString() + '<span class="d">' + esc(r.sell_at || "") + "</span>"
           : '<span class="hold">보유중</span>') + "</td>" +
+        '<td class="days">' + days + "</td>" +
         "<td>" + (r.ret == null ? "—"
           : '<b class="' + (r.ret >= 0 ? "pos" : "neg") + '">' +
             (r.ret >= 0 ? "+" : "") + fmtPct(r.ret) + "</b>") +
@@ -567,7 +569,7 @@
     }
     return '<section class="trade-log"><div class="tl-head">매매 기록 <span>' +
       rows.length + '건</span></div><table class="tl"><thead><tr>' +
-      "<th>종목</th><th>매수</th><th>매도</th><th>손익</th><th></th>" +
+      "<th>종목</th><th>매수</th><th>매도</th><th>기간</th><th>손익</th><th></th>" +
       "</tr></thead><tbody>" + body + "</tbody></table>" + sum + "</section>";
   }
   // 차트 (라이브러리 0, 오프라인 동작). 데이터는 sanitizeChart 통과분만 온다.

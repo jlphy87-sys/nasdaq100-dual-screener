@@ -339,6 +339,7 @@ def test_trade_log_table_and_history_archive():
     html = _content(c)
     assert "매매 기록" in html and "1건" in html          # 표 노출
     assert "확정 1건 · 승 1 · 평균 +10.0%" in html        # 요약
+    assert "기간" in html and "10일" in html              # 보유 기간 (06-21→07-01)
     _click_content(c, ".trade-buy", "ZZZZ")               # 다시 매수 (새 사이클)
     c.eval("document.getElementById('tp-ZZZZ').value = '50'")
     _click_content(c, ".trade-ok", "ZZZZ")
@@ -348,6 +349,7 @@ def test_trade_log_table_and_history_archive():
     assert saved["buy_price"] == 50.0 and saved["sell_price"] is None
     html2 = _content(c)
     assert "2건" in html2 and "보유중" in html2           # 이력 + 보유중 함께 표시
+    assert "당일" in html2                                # 오늘 매수한 보유중 행 기간
 
 
 def test_trade_delete_buttons_current_and_history():

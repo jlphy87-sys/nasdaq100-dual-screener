@@ -203,9 +203,19 @@ var AppLogic = (function () {
     return cp / sp - 1;
   }
 
+  // D20d: 보유 기간(일). YYYY-MM-DD 형식만 신뢰 — 역전·오염은 null(표시 안 함).
+  function daysBetween(a, b) {
+    var re = /^\d{4}-\d{2}-\d{2}$/;
+    if (typeof a !== "string" || typeof b !== "string" || !re.test(a) || !re.test(b)) return null;
+    var ms = Date.parse(b) - Date.parse(a);
+    if (!isFinite(ms) || ms < 0) return null;
+    return Math.round(ms / 86400000);
+  }
+
   // D20c: 매매 기록 표용 행 목록 — 이력(trades[]) + 현재 사이클을 합쳐
   // 날짜 내림차순. i 는 삭제용 식별자 (이력 인덱스, 현재 사이클은 -1).
-  function tradeRows(entries, prices) {
+  // today(YYYY-MM-DD)를 주면 보유중 행의 기간(days)을 오늘까지로 계산.
+  function tradeRows(entries, prices, today) {
     var rows = [];
     for (var k = 0; k < entries.length; k++) {
       var e = entries[k];
@@ -214,13 +224,16 @@ var AppLogic = (function () {
         rows.push({ ticker: e.ticker, i: t, closed: true,
           buy_price: hist[t].buy_price, buy_at: hist[t].buy_at,
           sell_price: hist[t].sell_price, sell_at: hist[t].sell_at,
-          ret: hist[t].sell_price / hist[t].buy_price - 1 });
+          ret: hist[t].sell_price / hist[t].buy_price - 1,
+          days: daysBetween(hist[t].buy_at, hist[t].sell_at) });
       }
       if (e.buy_price != null) {
         var cur = tradeReturn(e, prices ? prices[e.ticker] : null);
         rows.push({ ticker: e.ticker, i: -1, closed: cur.closed,
           buy_price: e.buy_price, buy_at: e.buy_at,
-          sell_price: e.sell_price, sell_at: e.sell_at, ret: cur.ret });
+          sell_price: e.sell_price, sell_at: e.sell_at, ret: cur.ret,
+          days: cur.closed ? daysBetween(e.buy_at, e.sell_at)
+                           : daysBetween(e.buy_at, today) });
       }
     }
     rows.sort(function (a, b) {
@@ -394,6 +407,7 @@ var AppLogic = (function () {
     tradeReturn: tradeReturn,
     parsePrice: parsePrice,
     tradeRows: tradeRows,
+    daysBetween: daysBetween,
     sortWatch: sortWatch,
     itemsForTab: itemsForTab,
     filterSort: filterSort,
