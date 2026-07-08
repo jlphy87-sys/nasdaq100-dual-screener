@@ -219,6 +219,11 @@
     "sector_kr": "헬스케어",
     "name": "Gilead Sciences"
   },
+  "HONA": {
+    "sector": "Industrials",
+    "sector_kr": "산업재",
+    "name": "Honeywell Aerospace"
+  },
   "HON": {
     "sector": "Industrials",
     "sector_kr": "산업재",
@@ -433,6 +438,11 @@
     "sector": "Information Technology",
     "sector_kr": "IT/기술",
     "name": "Shopify"
+  },
+  "SPCX": {
+    "sector": "Communication Services",
+    "sector_kr": "커뮤니케이션",
+    "name": "SpaceX"
   },
   "SBUX": {
     "sector": "Consumer Discretionary",
