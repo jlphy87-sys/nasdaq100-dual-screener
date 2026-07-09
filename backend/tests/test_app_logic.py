@@ -147,6 +147,29 @@ def test_sanitize_quotes_normal_missing_tampered():
     assert _sanitize(c, good)["quotes"] == {}
 
 
+def test_sanitize_charts_normal_missing_tampered():
+    # D21 경계값 4종: 정상 / 누락(구버전) / 변조(비객체·오염 항목) / 상한
+    c = _ctx()
+    good = _mock("good")
+    candle = {"o": [10, 11], "h": [12, 13], "l": [9, 10], "c": [11, 12],
+              "start": "2026-04-01", "end": "2026-07-06"}
+    good["charts"] = {"AAPL": candle,
+                      "BAD1": {"c": [1, -2], "o": [1, 1], "h": [1, 1], "l": [1, 1]},  # 음수 종가
+                      "BAD2": "악성", "BAD3": None}
+    out = _sanitize(c, good)
+    assert out["charts"]["AAPL"]["mode"] == "candle"
+    assert out["charts"]["AAPL"]["c"] == [11, 12]
+    for k in ["BAD1", "BAD2", "BAD3"]:
+        assert k not in out["charts"], k          # 오염 종목만 개별로 버림
+    del good["charts"]                            # 누락(구버전 results.json) → 빈 객체
+    assert _sanitize(c, good)["charts"] == {}
+    # 톱레벨 변조 → 빈 객체 / 개수 상한 500
+    assert json.loads(c.eval("JSON.stringify(AppLogic.sanitizeCharts('악성'))")) == {}
+    many = {("T%d" % i): candle for i in range(520)}
+    n = c.eval("Object.keys(AppLogic.sanitizeCharts(%s)).length" % json.dumps(many))
+    assert n == 500
+
+
 def test_sanitize_watch_normal_dedupe_cap_tampered():
     c = _ctx()
 

@@ -172,6 +172,28 @@ def test_quotes_disabled_by_knob():
     assert r["quotes"] == {}  # 키는 유지(계약), 내용만 비움
 
 
+def test_charts_field_covers_all_fetched_tickers():
+    # D21: 관심종목 차트용 — 스크리닝 탈락 종목(CCC)도 charts 에는 실린다.
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df(),
+              "CCC": make_ohlcv(np.linspace(100, 90, 300))}
+    r = _build(frames)
+    assert "AAA" in r["charts"] and "CCC" in r["charts"]
+    ch = r["charts"]["CCC"]
+    for k in ["o", "h", "l", "c", "ma5", "ma10", "bb_mid", "bb_up", "bb_lo"]:
+        assert len(ch[k]) == len(ch["c"]), k
+    # 통과 종목은 카드용 chart 와 동일 소스 → 종가 시리즈 일치
+    item_ch = next(i for i in r["items"] if i["ticker"] == "AAA")["chart"]
+    assert r["charts"]["AAA"]["c"] == item_ch["c"]
+
+
+def test_charts_disabled_by_knob():
+    config = json.loads(json.dumps(CONFIG))
+    config["charts"] = {"enabled": False}
+    frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
+    r = _build(frames, config=config)
+    assert r["charts"] == {}  # 키는 유지(계약), 내용만 비움
+
+
 def test_chart_ohlc_and_bands_consistent():
     frames = {"QQQ": rising_qqq(), "AAA": _s1_pass_df()}
     r = _build(frames)

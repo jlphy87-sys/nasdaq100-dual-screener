@@ -131,6 +131,22 @@ var AppLogic = (function () {
     return out;
   }
 
+  // charts: 전 유니버스 봉차트 (D21) — 저장 종목이 스크리닝에서 빠진 날에도
+  // 관심 탭에서 차트를 본다. 구버전 results.json 엔 없음 → 빈 객체(카드에 차트만 생략).
+  // 각 항목은 sanitizeChart 재사용 — 오염된 종목 차트만 개별로 버린다.
+  function sanitizeCharts(raw) {
+    var out = {};
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+    var keys = Object.keys(raw), n = 0;
+    for (var i = 0; i < keys.length && n < 500; i++) {   // 개수 상한: 변조 방어
+      var ch = sanitizeChart(raw[keys[i]]);
+      if (!ch) continue;
+      out[keys[i]] = ch;
+      n++;
+    }
+    return out;
+  }
+
   // 관심 목록은 폰 localStorage 소유 — 여기도 불신(변조/구버전/중복) 정규화.
   // 상한 200: 변조로 거대 배열이 와도 렌더·저장 비용을 제한.
   function sanitizeWatch(raw) {
@@ -337,6 +353,7 @@ var AppLogic = (function () {
       errors_count: num(raw.errors_count) || 0,
       sectors: sectors,
       quotes: sanitizeQuotes(raw.quotes),
+      charts: sanitizeCharts(raw.charts),
       items: items
     };
   }
@@ -402,6 +419,7 @@ var AppLogic = (function () {
   return {
     sanitize: sanitize,
     sanitizeQuotes: sanitizeQuotes,
+    sanitizeCharts: sanitizeCharts,
     sanitizeWatch: sanitizeWatch,
     watchReturn: watchReturn,
     tradeReturn: tradeReturn,

@@ -131,6 +131,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | `s2.trigger.mode` | breakout | `macd_gc`로 바꾸면 트리거 실험 가능 |
 | `chart.bars` | 63 | 카드 펼침 시 봉차트(+5·10일선, BB 20·2σ)에 실을 최근 봉 수 (~3개월, 0=차트 끔) |
 | `quotes.enabled` | true | 전 유니버스 경량 시세를 results.json 에 포함 — 관심종목(★) 추적용 (D19) |
+| `charts.enabled` | true | 전 유니버스 봉차트를 results.json 에 포함(파일 ~850KB, gzip ~170KB) — 관심 탭 추적 카드 차트용 (D21) |
 | `debug_show_all` | false | true면 탈락 종목도 items에 포함(디버그) |
 
 ---
@@ -153,6 +154,7 @@ Source: **Deploy from a branch** → Branch: `main`, 폴더: **/docs** → Save.
 | D17 | APK = 의존성 0개 WebView 래퍼(`android/`), Actions에서 빌드→Release 발행. 서명 키는 즉석 생성(기본)·시크릿 고정(탈출구). 스토어 배포 시 TWA 교체 탈출구 |
 | D19 | 관심종목(★)은 폰 localStorage 소유(서버 무상태 유지). 저장일·저장가 스냅샷 기록, 스크리닝 탈락 후에도 `quotes`(전 유니버스 시세, ~4KB)로 계속 추적. 탈출구: quotes.enabled=false, 앱은 "시세 없음"으로 강등 |
 | D20 | 관심 탭 가상 매매 표식: 매수/매도 버튼 → 인라인 가격 입력폼(기본값=그날 종가, 사용자가 체결가로 조절 가능; WebView 는 prompt 미지원이라 인라인 폼). 보유중 평가손익·매도 후 확정손익 표시, 봉차트에 매수/매도 가격 점선 기준선+라벨(범위 밖이면 스케일 확장; 봉 날짜 배열이 없어 X 위치 마킹은 불가 — 가격선이 정직한 근사). 다시 매수 시 완결 사이클은 trades[] 이력으로 자동 보존(종목당 50건 상한), 관심 탭 상단에 매매 기록 표(종목·매수·매도·기간·손익, 확정 건수·승수·평균 요약; 기간=보유 일수, 보유중은 오늘까지) + 행별/카드별 기록 삭제(✕) |
+| D21 | 관심 탭 추적 카드(오늘 스크리닝에 없는 저장 종목)도 카드를 누르면 봉차트가 펼쳐진다 — results.json 에 `charts`(전 유니버스 봉차트, 계약상 필드 추가만) 포함. 이유: 관심 목록은 폰에만 있어 서버가 모름 → 전부 싣는 수밖에(D19 와 동일 논리). 비용: 파일 ~850KB(gzip ~170KB). 탈출구: charts.enabled=false → 차트·▼만 조용히 생략(구버전 JSON 도 동일 강등) |
 
 ---
 

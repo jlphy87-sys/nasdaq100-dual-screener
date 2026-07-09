@@ -477,13 +477,18 @@
     var cur = q ? q.price : null;
     var chg = q ? q.chg : null;
     var ret = AppLogic.watchReturn(en, cur);
+    // D21: 전 유니버스 charts 에서 봉차트 — 카드를 누르면 펼쳐진다.
+    // 구버전 JSON(charts 없음)이면 차트만 조용히 생략(▼ 표시도 숨김).
+    var ch = (state.data && state.data.charts) ? state.data.charts[en.ticker] : null;
+    var detail = ch ? chartHtml(ch, tradeMarks(en.ticker)) : "";
     return '<article class="card watch-card" style="border-left-color:' + esc(color) + '">' +
       '<div class="card-row1"><span class="tk">' + esc(en.ticker) + "</span>" +
       '<span class="dot" style="background:' + esc(color) + '"></span>' +
       '<span class="nm">' + esc(en.name) + "</span>" +
       '<span class="price">' + (cur == null ? "—" : "$" + cur.toLocaleString()) + "</span>" +
       '<span class="badges"><span class="badge watch">추적</span></span>' +
-      '<button class="star on" data-tk="' + esc(en.ticker) + '" aria-label="관심종목 삭제">★</button></div>' +
+      '<button class="star on" data-tk="' + esc(en.ticker) + '" aria-label="관심종목 삭제">★</button>' +
+      (ch ? '<span class="chev">▼</span>' : "") + "</div>" +
       '<div class="watch-row"><span>저장 ' + esc(en.saved_at || "—") +
       (en.saved_price != null ? " · $" + en.saved_price.toLocaleString() : "") + "</span><span>" +
       (chg == null ? "" : '오늘 <b class="' + (chg >= 0 ? "pos" : "neg") + '">' +
@@ -492,7 +497,7 @@
         (ret >= 0 ? "+" : "") + fmtPct(ret) + "</b> "
         : (cur == null ? "시세 없음 " : "")) +
       '<button class="watch-del" data-tk="' + esc(en.ticker) + '">삭제</button></span></div>' +
-      tradeHtml(en, cur) +
+      tradeHtml(en, cur) + detail +
       '<div class="watch-note">오늘 스크리닝 목록에는 없음 — 시세로만 추적 중</div></article>';
   }
 

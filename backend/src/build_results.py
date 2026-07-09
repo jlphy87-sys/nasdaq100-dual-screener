@@ -116,6 +116,7 @@ def build(
     debug_show_all = bool(config.get("debug_show_all", False))
     chart_bars = int(config.get("chart", {}).get("bars", 63))  # ~3개월 (0=차트 생략)
     quotes_on = bool(config.get("quotes", {}).get("enabled", True))  # D19 관심종목 추적용
+    charts_on = bool(config.get("charts", {}).get("enabled", True))  # D21 관심종목 차트용
 
     # ---- 유니버스 (D2) ------------------------------------------------------
     warnings: list[str] = []
@@ -156,6 +157,10 @@ def build(
     s2_evals: dict[str, dict] = {}
     chart_src: dict[str, pd.DataFrame] = {}  # 카드 차트용 OHLC 프레임 보관
     quotes: dict[str, dict] = {}             # D19: 전 유니버스 경량 시세 (관심종목 추적)
+    # D21: 전 유니버스 차트 — 저장 종목이 스크리닝에서 빠진 날에도 관심 탭에서
+    # 봉차트를 봐야 "추적"이 성립 (서버는 폰의 관심 목록을 모름 → 전부 싣는다, D19 와 동일 논리).
+    # 비용: 종목당 ~4KB × ~101 = 파일 ~400KB(gzip ~100KB). 탈출구: config.charts.enabled=false → {}.
+    charts: dict[str, dict] = {}
     last_bar_dates: list[str] = []
 
     for ticker in tickers:
@@ -168,6 +173,10 @@ def build(
                 q = _quote(df)
                 if q:
                     quotes[ticker] = q
+            if charts_on:
+                ch = _chart_block(df, chart_bars)
+                if ch:
+                    charts[ticker] = ch
             e1 = evaluate_s1(df, s1cfg)
             e2 = evaluate_s2(df, qqq_close, s2cfg)
             if e1 is None and e2 is None:
@@ -262,6 +271,7 @@ def build(
         "warnings": warnings,
         "sectors": sectors,
         "quotes": quotes,  # D19: 관심종목(로컬 저장) 추적용 — 계약(§7) 필드 추가
+        "charts": charts,  # D21: 관심종목 차트용 전 유니버스 봉차트 — 계약(§7) 필드 추가
         "items": items,
     }
 

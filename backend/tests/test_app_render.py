@@ -401,6 +401,45 @@ def test_chart_trade_marker_lines_render():
     assert html.count('class="mk-buy"') == 1
 
 
+def test_watch_card_chart_from_charts_field():
+    # D21: 오늘 스크리닝에 없는 저장 종목도 charts(전 유니버스)로 봉차트를 편다
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 110.0, "chg": 0.01}}
+    m["charts"] = {"ZZZZ": {
+        "closes": [100, 102, 101, 110],
+        "o": [99, 101, 102, 101], "h": [101, 103, 103, 111],
+        "l": [98, 100, 100, 100], "c": [100, 102, 101, 110],
+        "ma5": [None, 100.5, 101.0, 104.0], "ma10": [None, None, 100.8, 103.0],
+        "bb_mid": [None, 101.0, 101.5, 104.0],
+        "bb_up": [None, 103.0, 104.0, 112.0], "bb_lo": [None, 99.0, 99.5, 96.0],
+        "start": "2026-06-27", "end": "2026-07-02",
+    }}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:100.0,"
+           " buy_price:101.0, buy_at:'2026-06-28'}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "chart-wrap" in html and 'class="chev"' in html   # 차트 + 펼침 표시
+    assert 'class="mk-buy"' in html and "매수 101" in html     # 가상 매수 가격선도 표시
+    assert "스크리닝 목록에는 없음" in html                     # 추적 카드인 채로
+
+
+def test_watch_card_no_charts_field_degrades_quietly():
+    # 구버전 results.json(charts 없음): 차트·▼ 만 생략, 카드는 정상 (크래시 금지)
+    m = _mock("good")
+    m["quotes"] = {"ZZZZ": {"price": 110.0, "chg": 0.01}}
+    pre = ("__ls['ndx.dual.watch.v1'] = JSON.stringify("
+           "[{ticker:'ZZZZ', name:'Gone Corp', sector_kr:'미분류',"
+           " saved_at:'2026-06-20', saved_price:100.0}]);")
+    c = _mount(m, pre_js=pre)
+    _click_tab(c, "watch")
+    html = _content(c)
+    assert "ZZZZ" in html and "$110" in html
+    assert "chart-wrap" not in html and 'class="chev"' not in html
+
+
 def test_trade_open_position_shows_unrealized_pnl():
     # 사전 매수(50) + 현재가 55 → 평가 +10.0% / 사전 매수·매도 → 확정 -10.0%
     m = _mock("good")

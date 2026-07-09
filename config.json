@@ -21,5 +21,6 @@
   },
   "chart": { "bars": 63 },
   "quotes": { "enabled": true },
+  "charts": { "enabled": true },
   "debug_show_all": false
 }
