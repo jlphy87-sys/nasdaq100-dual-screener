@@ -1,6 +1,6 @@
 {
  "as_of": "2026-08-27",
- "generated_at": "2026-08-28T06:45:11Z",
+ "generated_at": "2026-08-29T04:00:51Z",
  "stale": false,
  "universe_count": 103,
  "regime": {
@@ -68405,9 +68405,9 @@
     "macd": 8.9807,
     "signal": 8.6401,
     "hist": 0.3406,
-    "avg_dollar_volume": 453585741.0,
+    "avg_dollar_volume": 453734560.0,
     "sma200": 248.64,
-    "vol_ratio": 2.18,
+    "vol_ratio": 2.19,
     "adx": 25.4,
     "conds": {
      "cond_gc": true,
@@ -68426,7 +68426,7 @@
     "drawdown": -0.172,
     "pullback_low_pct": -0.0744,
     "trigger": "breakout",
-    "vol_ratio": 2.18,
+    "vol_ratio": 2.19,
     "conds": {
      "cond_rs_dual": false,
      "cond_structure": false,
@@ -69807,7 +69807,7 @@
     "macd": 11.0861,
     "signal": 11.0329,
     "hist": 0.0532,
-    "avg_dollar_volume": 7822563577.0,
+    "avg_dollar_volume": 7823376091.0,
     "sma200": 151.41,
     "vol_ratio": 0.86,
     "adx": 35.0,
